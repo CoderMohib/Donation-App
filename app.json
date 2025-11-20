@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "donationapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true
     },
@@ -19,7 +19,9 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.DonationApp",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "output": "static",

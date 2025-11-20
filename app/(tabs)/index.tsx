@@ -1,98 +1,119 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { CampaignCard } from '@/src/components/cards';
+import { DashboardLayout } from '@/src/components/layouts';
+import { getCampaigns } from '@/src/firebase';
+import { Campaign } from '@/src/types';
+import { asyncHandler } from '@/src/utils';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('active');
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const loadCampaigns = async () => {
+    const [data, error] = await asyncHandler(
+      getCampaigns({
+        status: filter === 'all' ? undefined : filter,
+      })
+    );
+
+    if (data) {
+      setCampaigns(data);
+    }
+    setLoading(false);
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    loadCampaigns();
+  }, [filter]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadCampaigns();
+  };
+
+  const FilterButton = ({ label, value }: { label: string; value: typeof filter }) => (
+    <TouchableOpacity
+      onPress={() => setFilter(value)}
+      className={`px-4 py-2 rounded-full mr-2 ${
+        filter === value ? 'bg-purple-600' : 'bg-gray-200'
+      }`}
+    >
+      <Text
+        className={`font-semibold ${
+          filter === value ? 'text-white' : 'text-gray-700'
+        }`}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <DashboardLayout
+      title="Campaigns"
+      rightAction={
+        <TouchableOpacity
+          onPress={() => router.push('/profile')}
+          className="w-10 h-10 items-center justify-center"
+        >
+          <Ionicons name="person-circle-outline" size={28} color="#7C3AED" />
+        </TouchableOpacity>
+      }
+    >
+      {/* Header Section */}
+      <View className="px-4 pt-4 pb-2">
+        <Text className="text-2xl font-bold text-gray-900 mb-2">
+          Make a Difference Today
+        </Text>
+        <Text className="text-gray-600 mb-4">
+          Support causes that matter to you
+        </Text>
+
+        {/* Filter Buttons */}
+        <View className="flex-row mb-4">
+          <FilterButton label="Active" value="active" />
+          <FilterButton label="All" value="all" />
+          <FilterButton label="Completed" value="completed" />
+        </View>
+      </View>
+
+      {/* Campaigns List */}
+      <View className="px-4">
+        {loading ? (
+          <View className="items-center justify-center py-20">
+            <Text className="text-gray-500">Loading campaigns...</Text>
+          </View>
+        ) : campaigns.length === 0 ? (
+          <View className="items-center justify-center py-20">
+            <Ionicons name="search-outline" size={64} color="#D1D5DB" />
+            <Text className="text-gray-500 mt-4 text-center">
+              No campaigns found
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={campaigns}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <CampaignCard
+                campaign={item}
+                onPress={() => router.push(`/campaign/${item.id}`)}
+              />
+            )}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            }
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+      </View>
+    </DashboardLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
