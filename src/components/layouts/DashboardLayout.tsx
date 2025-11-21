@@ -9,6 +9,7 @@ interface DashboardLayoutProps {
   showBackButton?: boolean;
   onBackPress?: () => void;
   rightAction?: ReactNode;
+  scrollable?: boolean;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -17,9 +18,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   showBackButton = false,
   onBackPress,
   rightAction,
+  scrollable = true,
 }) => {
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-gray-100" edges={['top']}>
       {/* Header */}
       {title && (
         <View className="bg-white px-4 py-4 shadow-sm border-b border-gray-100">
@@ -49,13 +51,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       )}
 
       {/* Content */}
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </ScrollView>
+      {scrollable ? (
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </ScrollView>
+      ) : (
+        <View className="flex-1">{children}</View>
+      )}
     </SafeAreaView>
   );
 };

@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { Campaign } from '../../types';
@@ -12,7 +13,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
   campaign,
   onPress,
 }) => {
-  const progress = calculateProgress(campaign.currentAmount, campaign.goalAmount);
+  const progress = calculateProgress(campaign.donatedAmount, campaign.targetAmount);
   const daysRemaining = campaign.endDate
     ? calculateDaysRemaining(campaign.endDate)
     : null;
@@ -51,7 +52,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
 
         {/* Description */}
         <Text className="text-gray-600 text-sm mb-4" numberOfLines={2}>
-          {campaign.description}
+          {campaign.shortDescription}
         </Text>
 
         {/* Progress Bar */}
@@ -68,10 +69,10 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
         <View className="flex-row justify-between items-center">
           <View>
             <Text className="text-2xl font-bold text-green-600">
-              {formatCurrency(campaign.currentAmount)}
+              {formatCurrency(campaign.donatedAmount)}
             </Text>
             <Text className="text-gray-500 text-sm">
-              raised of {formatCurrency(campaign.goalAmount)}
+              raised of {formatCurrency(campaign.targetAmount)}
             </Text>
           </View>
 
@@ -86,13 +87,11 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
         </View>
 
         {/* Creator Info */}
-        {campaign.createdByName && (
-          <View className="mt-3 pt-3 border-t border-gray-100">
-            <Text className="text-gray-500 text-xs">
-              Created by{' '}
-              <Text className="text-purple-600 font-semibold">
-                {campaign.createdByName}
-              </Text>
+        {campaign.ownerName && (
+          <View className="flex-row items-center mt-2">
+            <Ionicons name="person-outline" size={14} color="#9ca3af" />
+            <Text className="text-gray-400 text-xs ml-1">
+              by {campaign.ownerName}
             </Text>
           </View>
         )}

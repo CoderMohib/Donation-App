@@ -57,7 +57,6 @@ export default function DonationScreen() {
         amount: parseFloat(amount),
         message: message.trim() || undefined,
         isAnonymous,
-        status: 'completed',
       })
     );
 

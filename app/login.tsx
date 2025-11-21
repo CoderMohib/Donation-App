@@ -11,7 +11,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { toast, showError, showInfo, hideToast } = useToast();
+  const { toast, showError, hideToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -44,16 +44,37 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (error) {
+      // Check if error is due to unverified email
+      if (error.message.includes('verify your email')) {
+        showError(error.message);
+        // Redirect to email verification screen after 2 seconds
+        setTimeout(() => {
+          router.push('/email-verification');
+        }, 2000);
+        return;
+      }
+      
       showError(error.message);
       return;
     }
 
-    // Navigate to home screen
-    router.replace('/(tabs)');
+    // Navigate based on role
+    if (_user && _user.role === 'admin') {
+      router.replace('/(admin)/dashboard');
+    } else {
+      router.replace('/(tabs)');
+    }
   };
 
   return (
     <AuthLayout>
+      {/* Toast Notification */}
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
       {/* Title - Centered */}
       <View className="mb-8 items-center">
         <Text className="text-4xl font-bold text-white mb-2 text-center">
@@ -95,9 +116,7 @@ export default function LoginScreen() {
 
         {/* Forgot Password Link */}
         <TouchableOpacity 
-          onPress={() => {
-            showInfo('Password reset functionality will be implemented soon.');
-          }}
+          onPress={() => router.push('/forgot-password')}
           className="self-end mt-1"
         >
           <Text className="text-secondary-400 text-sm font-semibold">
@@ -129,13 +148,7 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Toast Notification */}
-      <Toast
-        visible={toast.visible}
-        message={toast.message}
-        type={toast.type}
-        onHide={hideToast}
-      />
+      
     </AuthLayout>
   );
 }

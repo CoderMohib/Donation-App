@@ -4,11 +4,11 @@ import { DashboardLayout } from '@/src/components/layouts';
 import { getCampaign, getCampaignDonations } from '@/src/firebase';
 import { Campaign, Donation } from '@/src/types';
 import {
-  asyncHandler,
-  calculateDaysRemaining,
-  calculateProgress,
-  formatCurrency,
-  formatDate,
+    asyncHandler,
+    calculateDaysRemaining,
+    calculateProgress,
+    formatCurrency,
+    formatDate,
 } from '@/src/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -58,7 +58,7 @@ export default function CampaignScreen() {
     );
   }
 
-  const progress = calculateProgress(campaign.currentAmount, campaign.goalAmount);
+  const progress = calculateProgress(campaign.donatedAmount, campaign.targetAmount);
   const daysRemaining = campaign.endDate
     ? calculateDaysRemaining(campaign.endDate)
     : null;
@@ -68,6 +68,7 @@ export default function CampaignScreen() {
       title="Campaign Details"
       showBackButton
       onBackPress={() => router.back()}
+      scrollable={false}
     >
       <ScrollView className="flex-1">
         {/* Campaign Image */}
@@ -97,7 +98,7 @@ export default function CampaignScreen() {
 
           {/* Description */}
           <Text className="text-gray-600 text-base leading-6 mb-6">
-            {campaign.description}
+            {campaign.fullDescription}
           </Text>
 
           {/* Progress Section */}
@@ -105,10 +106,10 @@ export default function CampaignScreen() {
             <View className="flex-row justify-between mb-3">
               <View>
                 <Text className="text-3xl font-bold text-green-600">
-                  {formatCurrency(campaign.currentAmount)}
+                  {formatCurrency(campaign.donatedAmount)}
                 </Text>
                 <Text className="text-gray-500 text-sm">
-                  raised of {formatCurrency(campaign.goalAmount)}
+                  raised of {formatCurrency(campaign.targetAmount)}
                 </Text>
               </View>
               <View className="items-end">

@@ -1,8 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
@@ -11,27 +12,80 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#7C3AED', // Purple color
+        tabBarActiveTintColor: '#ff7a5e', // Primary peachy pink
+        tabBarInactiveTintColor: '#9CA3AF', // Gray for inactive
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#FFFFFF',
+          backgroundColor: colorScheme === 'dark' ? '#111827' : '#FFFFFF',
+          borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
+          height: 60,
+          paddingBottom: 8,
         },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Campaigns',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="heart.fill" color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color }) => <Ionicons name="search" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="create-campaign"
+        options={{
+          title: '',
+          tabBarLabel: () => null, // Hide the label
+          tabBarIcon: ({ focused }) => (
+            <View
+              style={{
+                position: 'absolute',
+                top: -20,
+                width: 60,
+                height: 60,
+                borderRadius: 30,
+                backgroundColor: colorScheme === 'dark' ? '#111827' : '#FFFFFF',
+                justifyContent: 'center',
+                alignItems: 'center',
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 4 },
+                
+                elevation: 8,
+              }}
+            >
+              <Ionicons name="add" size={36} color="#ff7a5e" />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="my-campaigns"
+        options={{
+          title: 'My Campaigns',
+          tabBarIcon: ({ color }) => <Ionicons name="heart" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
+        }}
+      />
+      {/* Hidden screen - accessible via navigation but not in tab bar */}
+      <Tabs.Screen
         name="my-donations"
         options={{
-          title: 'My Donations',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
+          href: null, // Hide from tab bar
         }}
       />
     </Tabs>
   );
 }
+

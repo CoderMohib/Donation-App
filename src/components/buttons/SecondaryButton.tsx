@@ -54,7 +54,7 @@ export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
       disabled={isDisabled}
       activeOpacity={0.7}
       className={`
-        rounded-xl ${sizeStyles[size]}
+        rounded-full ${sizeStyles[size]}
         ${containerClass}
         flex-row items-center justify-center
       `}

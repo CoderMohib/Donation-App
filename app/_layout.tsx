@@ -5,16 +5,14 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { ActivityIndicator, Image, Text, View } from 'react-native';
 import 'react-native-reanimated';
 import "../global.css";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -31,9 +29,8 @@ export default function RootLayout() {
         // Import Firebase to trigger initialization
         await import('@/src/firebase/firebase');
         
-        // Wait a bit for navigation and other resources to be ready
-        // This ensures the app is fully loaded before hiding splash
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Reduced delay for faster initial load
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         setAppIsReady(true);
       } catch (error) {
@@ -56,26 +53,22 @@ export default function RootLayout() {
         console.warn('Error hiding splash screen:', e);
       }
     }
-  }, [appIsReady]);
+  }, [user?.role, user?.id, segments[0], authLoading, appIsReady]);
 
-  // Handle route protection
-  useEffect(() => {
-    if (authLoading || !appIsReady) return;
-
-    const inAuthGroup = segments[0] === 'login' || segments[0] === 'signup';
-
-    if (!user && !inAuthGroup) {
-      // If user is not signed in and the initial segment is not anything in the auth group.
-      router.replace('/login');
-    } else if (user && inAuthGroup) {
-      // Redirect away from the sign-in page.
-      router.replace('/(tabs)');
-    }
-  }, [user, segments, authLoading, appIsReady, router]);
-
-  // Don't render until app is ready
-  if (!appIsReady) {
-    return null;
+  // Show loading screen while app is initializing or auth is loading
+  if (!appIsReady || authLoading) {
+    return (
+      <View className="flex-1 bg-gray-900 justify-center items-center">
+        <Image 
+          source={require('../assets/app_logo.png')} 
+          className="w-32 h-32 mb-6"
+          resizeMode="contain"
+        />
+        <Text className="text-white text-3xl font-bold mb-2">Donation App</Text>
+        <ActivityIndicator size="large" color="#ff7a5e" className="mt-4" />
+        <Text className="text-gray-400 mt-3 text-sm">Loading...</Text>
+      </View>
+    );
   }
 
   // Show error state if initialization failed (optional - can be removed if not needed)
@@ -94,13 +87,24 @@ export default function RootLayout() {
           {/* Auth Screens */}
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="signup" options={{ headerShown: false }} />
+          <Stack.Screen name="email-verification" options={{ headerShown: false }} />
+          <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
           
-          {/* Main App */}
+          {/* Main App - User Tabs */}
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          
+          {/* Admin Tabs */}
+          <Stack.Screen name="(admin)" options={{ headerShown: false }} />
           
           {/* Campaign Details */}
           <Stack.Screen 
             name="campaign/[id]" 
+            options={{ headerShown: false }} 
+          />
+          
+          {/* Campaign Edit */}
+          <Stack.Screen 
+            name="campaign/edit/[id]" 
             options={{ headerShown: false }} 
           />
           
@@ -109,14 +113,8 @@ export default function RootLayout() {
             name="donate/[campaignId]" 
             options={{ headerShown: false }} 
           />
-          
-          {/* Profile */}
-          <Stack.Screen 
-            name="profile" 
-            options={{ headerShown: false }} 
-          />
         </Stack>
-        <StatusBar style="auto" />
+        <StatusBar style="dark" />
       </View>
     </ThemeProvider>
   );

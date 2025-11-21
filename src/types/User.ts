@@ -2,8 +2,10 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    profileImage?: string;
-    role?: 'user' | 'admin';
+    photoURL?: string;
+    role: 'user' | 'admin'; // Required field
+    totalDonated: number; // Total amount donated by user
+    totalCampaigns: number; // Total campaigns created by user
     createdAt: number;
     updatedAt: number;
 }
@@ -11,6 +13,4 @@ export interface User {
 export interface UserProfile extends User {
     phone?: string;
     bio?: string;
-    totalDonations?: number;
-    donationCount?: number;
 }

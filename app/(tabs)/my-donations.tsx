@@ -19,7 +19,7 @@ export default function MyDonationsScreen() {
   }, []);
 
   const loadDonations = async () => {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) {
       setLoading(false);
       return;
@@ -43,7 +43,7 @@ export default function MyDonationsScreen() {
     );
   }
 
-  if (!auth.currentUser) {
+  if (!auth?.currentUser) {
     return (
       <DashboardLayout title="My Donations">
         <View className="items-center justify-center py-20 px-4">
@@ -64,7 +64,7 @@ export default function MyDonationsScreen() {
   }
 
   return (
-    <DashboardLayout title="My Donations">
+    <DashboardLayout title="My Donations" scrollable={false}>
       <View className="px-4 py-6">
         {donations.length === 0 ? (
           <View className="items-center justify-center py-20">

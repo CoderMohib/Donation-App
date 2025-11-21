@@ -68,3 +68,51 @@ export const truncateText = (text: string, maxLength: number): string => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength - 3) + '...';
 };
+
+/**
+ * Format Firebase error messages to user-friendly text
+ */
+export const formatFirebaseError = (error: any): string => {
+    // If it's already a custom error message, return it
+    if (error.message && !error.code) {
+        return error.message;
+    }
+
+    // Handle Firebase error codes
+    const errorCode = error.code || '';
+
+    switch (errorCode) {
+        case 'auth/invalid-credential':
+        case 'auth/wrong-password':
+        case 'auth/user-not-found':
+            return 'Invalid email or password. Please try again.';
+
+        case 'auth/invalid-email':
+            return 'Please enter a valid email address.';
+
+        case 'auth/user-disabled':
+            return 'This account has been disabled. Please contact support.';
+
+        case 'auth/email-already-in-use':
+            return 'This email is already registered. Please sign in instead.';
+
+        case 'auth/weak-password':
+            return 'Password is too weak. Please use at least 6 characters.';
+
+        case 'auth/too-many-requests':
+            return 'Too many failed attempts. Please try again later.';
+
+        case 'auth/network-request-failed':
+            return 'Network error. Please check your connection and try again.';
+
+        case 'auth/requires-recent-login':
+            return 'Please sign in again to complete this action.';
+
+        case 'auth/operation-not-allowed':
+            return 'This operation is not allowed. Please contact support.';
+
+        default:
+            // Return a generic message for unknown errors
+            return error.message || 'An unexpected error occurred. Please try again.';
+    }
+};

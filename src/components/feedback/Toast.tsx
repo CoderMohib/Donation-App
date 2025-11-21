@@ -109,7 +109,7 @@ export const Toast: React.FC<ToastProps> = ({
         opacity,
         transform: [{ translateY }],
       }}
-      className="absolute top-12 left-4 right-4 z-50"
+      className="absolute top-8 left-4 right-4 z-50"
     >
       <View className={`bg-gray-800 ${config.borderColor} border-2 rounded-2xl p-4 flex-row items-center shadow-2xl`}>
         <Ionicons name={config.icon} size={24} color={config.iconColor} />

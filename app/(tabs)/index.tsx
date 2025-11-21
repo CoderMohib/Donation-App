@@ -13,7 +13,7 @@ export default function HomeScreen() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('active');
+  const [filter, setFilter] = useState<'all' | 'in_progress' | 'completed'>('in_progress');
 
   const loadCampaigns = async () => {
     const [data, error] = await asyncHandler(
@@ -42,7 +42,7 @@ export default function HomeScreen() {
     <TouchableOpacity
       onPress={() => setFilter(value)}
       className={`px-4 py-2 rounded-full mr-2 ${
-        filter === value ? 'bg-purple-600' : 'bg-gray-200'
+        filter === value ? 'bg-secondary-600' : 'bg-gray-200'
       }`}
     >
       <Text
@@ -66,6 +66,7 @@ export default function HomeScreen() {
           <Ionicons name="person-circle-outline" size={28} color="#7C3AED" />
         </TouchableOpacity>
       }
+      scrollable={false}
     >
       {/* Header Section */}
       <View className="px-4 pt-4 pb-2">
@@ -78,7 +79,7 @@ export default function HomeScreen() {
 
         {/* Filter Buttons */}
         <View className="flex-row mb-4">
-          <FilterButton label="Active" value="active" />
+          <FilterButton label="In Progress" value="in_progress" />
           <FilterButton label="All" value="all" />
           <FilterButton label="Completed" value="completed" />
         </View>

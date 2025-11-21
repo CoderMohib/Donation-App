@@ -3,7 +3,7 @@ export interface Donation {
     campaignId: string;
     campaignTitle?: string;
     donorId: string;
-    donorName?: string;
+    donorName: string; // Required for display
     amount: number;
     message?: string;
     isAnonymous: boolean;
@@ -11,6 +11,7 @@ export interface Donation {
     transactionId?: string;
     status: 'pending' | 'completed' | 'failed';
     donatedAt: number;
+    timestamp: number; // Alias for donatedAt
 }
 
 export interface DonationSummary {

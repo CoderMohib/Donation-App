@@ -81,9 +81,9 @@ export default function SignupScreen() {
       return;
     }
 
-    showSuccess('Your account has been created successfully!');
+    showSuccess('Account created! Please verify your email.');
     setTimeout(() => {
-      router.replace('/(tabs)');
+      router.replace('/email-verification');
     }, 1500);
   };
 
