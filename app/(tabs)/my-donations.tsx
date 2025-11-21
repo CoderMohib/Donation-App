@@ -7,7 +7,7 @@ import { asyncHandler } from '@/src/utils';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, Text, View, Image } from 'react-native';
 
 export default function MyDonationsScreen() {
   const router = useRouter();
@@ -64,7 +64,15 @@ export default function MyDonationsScreen() {
   }
 
   return (
-    <DashboardLayout title="My Donations" scrollable={false}>
+    <DashboardLayout title="My Donations" scrollable={false} leftAction={
+      <View className="w-10 h-10 items-center justify-center">
+        <Image
+          source={require("@/assets/logo.png")}
+          className="w-14 h-14"
+          resizeMode="contain"
+        />
+      </View>
+    }>
       <View className="px-4 py-6">
         {donations.length === 0 ? (
           <View className="items-center justify-center py-20">

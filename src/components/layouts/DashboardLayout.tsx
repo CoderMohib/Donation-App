@@ -8,6 +8,7 @@ interface DashboardLayoutProps {
   title?: string;
   showBackButton?: boolean;
   onBackPress?: () => void;
+  leftAction?: ReactNode;
   rightAction?: ReactNode;
   scrollable?: boolean;
 }
@@ -17,6 +18,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   title,
   showBackButton = false,
   onBackPress,
+  leftAction,
   rightAction,
   scrollable = true,
 }) => {
@@ -26,9 +28,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {title && (
         <View className="bg-white px-4 py-4 shadow-sm border-b border-gray-100">
           <View className="flex-row items-center justify-between">
-            {/* Left Side - Back Button or Spacer */}
+            {/* Left Side - Custom Action, Back Button, or Spacer */}
             <View className="w-10">
-              {showBackButton && onBackPress && (
+              {leftAction ? (
+                leftAction
+              ) : showBackButton && onBackPress ? (
                 <TouchableOpacity
                   onPress={onBackPress}
                   className="w-10 h-10 items-center justify-center"
@@ -36,7 +40,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 >
                   <Ionicons name="arrow-back" size={24} color="#1F2937" />
                 </TouchableOpacity>
-              )}
+              ) : null}
             </View>
 
             {/* Center - Title */}

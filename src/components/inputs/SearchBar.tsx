@@ -31,7 +31,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor="#9ca3af"
-        className="flex-1 text-white text-base"
+        className="flex-1 text-base"
         autoCapitalize="none"
         autoCorrect={false}
       />

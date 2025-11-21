@@ -232,11 +232,7 @@ export default function AdminCampaignsScreen() {
   return (
     <DashboardLayout title="Manage Campaigns" showBackButton={false} scrollable={false}>
       <View className=" bg-gray-50">
-        {/* Header */}
-        <View className="px-4 pt-4">
-          <Text className="text-gray-900 text-2xl font-bold mb-1">Campaign Management</Text>
-          <Text className="text-gray-500">Total Compaigns: {campaigns.length}</Text>
-        </View>
+        
 
         {/* Search Bar */}
         <View className="px-4 pt-1">

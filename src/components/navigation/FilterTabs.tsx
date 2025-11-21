@@ -22,14 +22,14 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      className="flex px-3"
+      className="flex px-2.5"
       contentContainerStyle={{ paddingRight: 16 }}
     >
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.value}
           onPress={() => onTabChange(tab.value)}
-          className={`px-4 py-2 rounded-full mr-2 ${
+          className={`px-4 py-2 rounded-full mr-1.5 ${
         activeTab === tab.value ? 'bg-secondary-600' : 'bg-gray-200'
       }`}
         >
