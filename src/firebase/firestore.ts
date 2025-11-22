@@ -294,46 +294,125 @@ export const createDonation = async (
     ensureFirebaseReady();
     if (!db) throw new Error('Firebase is not initialized');
 
+    // Validate donation data
+    if (!donationData.campaignId) {
+        throw new Error('Campaign ID is required');
+    }
+    if (!donationData.donorId) {
+        throw new Error('Donor ID is required');
+    }
+    if (!donationData.amount || donationData.amount <= 0) {
+        throw new Error('Donation amount must be greater than 0');
+    }
+    if (!donationData.donorName) {
+        throw new Error('Donor name is required');
+    }
+
     const donationRef = doc(collection(db, 'donations'));
     const campaignRef = doc(db, 'campaigns', donationData.campaignId);
+    const userRef = doc(db, 'users', donationData.donorId);
 
-    // Use transaction to ensure atomic update
-    await runTransaction(db, async (transaction) => {
-        const campaignDoc = await transaction.get(campaignRef);
+    try {
+        // Use transaction to ensure atomic update
+        await runTransaction(db, async (transaction) => {
+            const campaignDoc = await transaction.get(campaignRef);
+            const userDoc = await transaction.get(userRef);
 
-        if (!campaignDoc.exists()) {
-            throw new Error('Campaign not found');
-        }
+            if (!campaignDoc.exists()) {
+                throw new Error('Campaign not found');
+            }
 
-        const campaign = campaignDoc.data() as Campaign;
+            const campaign = campaignDoc.data() as Campaign;
 
-        // Create donation
-        const donation: Donation = {
-            ...donationData,
-            id: donationRef.id,
-            status: 'completed',
-            donatedAt: Date.now(),
-            timestamp: Date.now(),
-        };
+            // Validate campaign status
+            if (campaign.status !== 'in_progress') {
+                throw new Error(`Campaign is ${campaign.status}. Only active campaigns can receive donations.`);
+            }
 
-        transaction.set(donationRef, donation);
+            console.log('Creating donation:', {
+                donationId: donationRef.id,
+                campaignId: donationData.campaignId,
+                amount: donationData.amount,
+                donorId: donationData.donorId,
+            });
 
-        // Update campaign's donated amount
-        const newDonatedAmount = campaign.donatedAmount + donationData.amount;
-        transaction.update(campaignRef, {
-            donatedAmount: newDonatedAmount,
-            updatedAt: Date.now(),
+            // Create donation - filter out undefined values
+            const donation: Donation = {
+                ...donationData,
+                id: donationRef.id,
+                status: 'completed',
+                donatedAt: Date.now(),
+                timestamp: Date.now(),
+            };
+
+            // Remove undefined fields (Firestore doesn't accept undefined)
+            Object.keys(donation).forEach(key => {
+                if (donation[key as keyof Donation] === undefined) {
+                    delete donation[key as keyof Donation];
+                }
+            });
+
+            transaction.set(donationRef, donation);
+
+            // Update campaign's donated amount
+            const newDonatedAmount = campaign.donatedAmount + donationData.amount;
+            transaction.update(campaignRef, {
+                donatedAmount: newDonatedAmount,
+                updatedAt: Date.now(),
+            });
+
+            console.log('Updated campaign donated amount:', {
+                campaignId: campaign.id,
+                previousAmount: campaign.donatedAmount,
+                newAmount: newDonatedAmount,
+                targetAmount: campaign.targetAmount,
+            });
+
+            // Auto-complete if goal reached
+            if (newDonatedAmount >= campaign.targetAmount && campaign.status === 'in_progress') {
+                transaction.update(campaignRef, {
+                    status: 'completed',
+                });
+                console.log('Campaign completed - goal reached!');
+            }
+
+            // Update user's donation statistics
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const currentTotalDonated = userData.totalDonated || 0;
+                const currentDonationCount = userData.donationCount || 0;
+
+                transaction.update(userRef, {
+                    totalDonated: currentTotalDonated + donationData.amount,
+                    donationCount: currentDonationCount + 1,
+                    updatedAt: Date.now(),
+                });
+
+                console.log('Updated user donation stats:', {
+                    userId: donationData.donorId,
+                    previousTotal: currentTotalDonated,
+                    newTotal: currentTotalDonated + donationData.amount,
+                    donationCount: currentDonationCount + 1,
+                });
+            }
         });
 
-        // Auto-complete if goal reached
-        if (newDonatedAmount >= campaign.targetAmount && campaign.status === 'in_progress') {
-            transaction.update(campaignRef, {
-                status: 'completed',
-            });
+        console.log('Donation transaction successful:', donationRef.id);
+        return donationRef.id;
+    } catch (error: any) {
+        console.error('Donation transaction failed:', error);
+        
+        // Re-throw with more context
+        if (error.code === 'permission-denied') {
+            throw new Error('Permission denied. You may not have access to create donations.');
+        } else if (error.code === 'not-found') {
+            throw new Error('Campaign not found or has been deleted.');
+        } else if (error.code === 'unavailable') {
+            throw new Error('Network error. Please check your internet connection.');
+        } else {
+            throw error;
         }
-    });
-
-    return donationRef.id;
+    }
 };
 
 /**

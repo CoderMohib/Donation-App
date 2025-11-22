@@ -1,18 +1,17 @@
-import { PrimaryButton } from '@/src/components/buttons';
-import { DonationCard } from '@/src/components/cards';
-import { DashboardLayout } from '@/src/components/layouts';
-import { getCampaign, getCampaignDonations } from '@/src/firebase';
-import { Campaign, Donation } from '@/src/types';
+import { PrimaryButton } from "@/src/components/buttons";
+import { DonationCard } from "@/src/components/cards";
+import { DashboardLayout } from "@/src/components/layouts";
+import { subscribeToCampaign, subscribeToDonations } from "@/src/firebase";
+import { Campaign, Donation } from "@/src/types";
 import {
-    asyncHandler,
-    calculateDaysRemaining,
-    calculateProgress,
-    formatCurrency,
-    formatDate,
-} from '@/src/utils';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, Text, View } from 'react-native';
+  calculateDaysRemaining,
+  calculateProgress,
+  formatCurrency,
+  formatDate,
+} from "@/src/utils";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Image, ScrollView, Text, View } from "react-native";
 
 export default function CampaignScreen() {
   const router = useRouter();
@@ -22,21 +21,29 @@ export default function CampaignScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadCampaignData();
-  }, [id]);
-
-  const loadCampaignData = async () => {
     if (!id) return;
 
-    const [campaignData, campaignError] = await asyncHandler(getCampaign(id));
-    const [donationsData, donationsError] = await asyncHandler(
-      getCampaignDonations(id, 5)
+    // Subscribe to real-time campaign updates
+    const unsubscribeCampaign = subscribeToCampaign(id, (campaignData) => {
+      setCampaign(campaignData);
+      setLoading(false);
+    });
+
+    // Subscribe to real-time donations updates
+    const unsubscribeDonations = subscribeToDonations(
+      id,
+      (donationsData) => {
+        setDonations(donationsData);
+      },
+      5
     );
 
-    if (campaignData) setCampaign(campaignData);
-    if (donationsData) setDonations(donationsData);
-    setLoading(false);
-  };
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubscribeCampaign();
+      unsubscribeDonations();
+    };
+  }, [id]);
 
   if (loading) {
     return (
@@ -58,7 +65,10 @@ export default function CampaignScreen() {
     );
   }
 
-  const progress = calculateProgress(campaign.donatedAmount, campaign.targetAmount);
+  const progress = calculateProgress(
+    campaign.donatedAmount,
+    campaign.targetAmount
+  );
   const daysRemaining = campaign.endDate
     ? calculateDaysRemaining(campaign.endDate)
     : null;
@@ -74,7 +84,7 @@ export default function CampaignScreen() {
         {/* Campaign Image */}
         <Image
           source={{
-            uri: campaign.imageUrl || 'https://via.placeholder.com/400x300',
+            uri: campaign.imageUrl || "https://via.placeholder.com/400x300",
           }}
           className="w-full h-64"
           resizeMode="cover"
@@ -123,7 +133,7 @@ export default function CampaignScreen() {
             {/* Progress Bar */}
             <View className="bg-gray-200 h-3 rounded-full overflow-hidden mb-3">
               <View
-                className="bg-gradient-to-r from-green-500 to-teal-500 h-full rounded-full"
+                className="bg-green-500 h-full rounded-full"
                 style={{ width: `${progress}%` }}
               />
             </View>
@@ -156,10 +166,12 @@ export default function CampaignScreen() {
           {/* Donate Button */}
           <PrimaryButton
             title="Donate Now"
-            onPress={() => router.push({
-              pathname: '/donate/[campaignId]',
-              params: { campaignId: campaign.id }
-            })}
+            onPress={() =>
+              router.push({
+                pathname: "/donate/[campaignId]",
+                params: { campaignId: campaign.id },
+              })
+            }
             variant="success"
             size="large"
           />

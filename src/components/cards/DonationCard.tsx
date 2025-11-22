@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Text, View } from 'react-native';
-import { Donation } from '../../types';
-import { formatCurrency, formatRelativeTime } from '../../utils';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Text, View } from "react-native";
+import { Donation } from "../../types";
+import { formatCurrency, formatRelativeTime } from "../../utils";
 
 interface DonationCardProps {
   donation: Donation;
@@ -24,7 +24,9 @@ export const DonationCard: React.FC<DonationCardProps> = ({
             </View>
             <View className="flex-1">
               <Text className="text-base font-semibold text-gray-900">
-                {donation.isAnonymous ? 'Anonymous' : donation.donorName || 'Unknown'}
+                {donation.isAnonymous
+                  ? "Anonymous"
+                  : donation.donorName || "Unknown"}
               </Text>
               <Text className="text-xs text-gray-500">
                 {formatRelativeTime(donation.donatedAt)}
@@ -35,7 +37,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
 
         {/* Amount */}
         <View className="bg-green-50 px-3 py-2 rounded-lg">
-          <Text className="text-lg font-bold text-green-600">
+          <Text className="text-lg font-bold text-green-600" numberOfLines={1}>
             {formatCurrency(donation.amount)}
           </Text>
         </View>
@@ -63,20 +65,20 @@ export const DonationCard: React.FC<DonationCardProps> = ({
       <View className="flex-row items-center mt-2">
         <View
           className={`px-2 py-1 rounded-full ${
-            donation.status === 'completed'
-              ? 'bg-green-100'
-              : donation.status === 'pending'
-              ? 'bg-yellow-100'
-              : 'bg-red-100'
+            donation.status === "completed"
+              ? "bg-green-100"
+              : donation.status === "pending"
+                ? "bg-yellow-100"
+                : "bg-red-100"
           }`}
         >
           <Text
             className={`text-xs font-semibold ${
-              donation.status === 'completed'
-                ? 'text-green-700'
-                : donation.status === 'pending'
-                ? 'text-yellow-700'
-                : 'text-red-700'
+              donation.status === "completed"
+                ? "text-green-700"
+                : donation.status === "pending"
+                  ? "text-yellow-700"
+                  : "text-red-700"
             }`}
           >
             {donation.status.toUpperCase()}

@@ -91,7 +91,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
         <View className="mb-3">
           <View className="bg-gray-200 h-2 rounded-full overflow-hidden">
             <View
-              className="bg-gradient-to-r from-green-500 to-teal-500 h-full rounded-full"
+              className="bg-green-500 h-full"
               style={{ width: `${progress}%` }}
             />
           </View>

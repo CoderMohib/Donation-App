@@ -1,15 +1,13 @@
 import { CampaignCard } from "@/src/components/cards";
 import { DashboardLayout } from "@/src/components/layouts";
 import { CampaignListSkeleton } from "@/src/components/skeletons";
-import { getCampaigns } from "@/src/firebase";
+import { subscribeToCampaigns } from "@/src/firebase";
 import { useAuth } from "@/src/hooks/useAuth";
 import { Campaign } from "@/src/types";
-import { asyncHandler } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   RefreshControl,
@@ -25,10 +23,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [currentLimit, setCurrentLimit] = useState(CAMPAIGNS_PER_PAGE);
 
   // Shuffle array to show random campaigns
   const shuffleArray = <T,>(array: T[]): T[] => {
@@ -40,47 +35,31 @@ export default function HomeScreen() {
     return shuffled;
   };
 
-  const loadCampaigns = async (
-    limit: number = CAMPAIGNS_PER_PAGE,
-    isRefresh: boolean = false
-  ) => {
-    const [data, error] = await asyncHandler(
-      getCampaigns({
+  useEffect(() => {
+    // Subscribe to real-time campaign updates
+    const unsubscribe = subscribeToCampaigns(
+      (campaignsData) => {
+        // Randomize the order for discovery
+        setCampaigns(shuffleArray(campaignsData));
+        setLoading(false);
+        setRefreshing(false);
+      },
+      {
         status: "in_progress", // Only show active campaigns on home screen
-        limitCount: limit,
-      })
+        limitCount: CAMPAIGNS_PER_PAGE,
+      }
     );
 
-    if (data) {
-      // Randomize the order for discovery
-      setCampaigns(shuffleArray(data));
-      // Check if there might be more campaigns
-      setHasMore(data.length >= limit);
-    }
-
-    setLoading(false);
-    setRefreshing(false);
-    setLoadingMore(false);
-  };
-
-  useEffect(() => {
-    loadCampaigns();
+    // Cleanup subscription on unmount
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    setCurrentLimit(CAMPAIGNS_PER_PAGE);
-    setHasMore(true);
-    loadCampaigns(CAMPAIGNS_PER_PAGE, true);
-  };
-
-  const handleLoadMore = async () => {
-    if (loadingMore || !hasMore) return;
-
-    setLoadingMore(true);
-    const newLimit = currentLimit + CAMPAIGNS_PER_PAGE;
-    setCurrentLimit(newLimit);
-    await loadCampaigns(newLimit);
+    // The subscription will automatically update the data
+    setTimeout(() => setRefreshing(false), 1000);
   };
 
   return (
@@ -176,41 +155,6 @@ export default function HomeScreen() {
                 </Text>
               </View>
             </View>
-          }
-          ListFooterComponent={
-            hasMore && campaigns.length > 0 ? (
-              <View className="py-4">
-                {loadingMore ? (
-                  <View className="flex-row items-center justify-center py-4">
-                    <ActivityIndicator size="small" color="#ff7a5e" />
-                    <Text className="text-gray-500 ml-2">Loading more...</Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    onPress={handleLoadMore}
-                    className="bg-primary-500 rounded-full py-4 px-6 mx-4 flex-row items-center justify-center"
-                    style={{
-                      shadowColor: "#ff7a5e",
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 8,
-                      elevation: 6,
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons
-                      name="add-circle-outline"
-                      size={20}
-                      color="white"
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text className="text-white font-bold text-base">
-                      Load More Campaigns
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ) : null
           }
           refreshControl={
             <RefreshControl

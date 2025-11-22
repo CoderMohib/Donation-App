@@ -2,6 +2,11 @@
  * Format currency to USD
  */
 export const formatCurrency = (amount: number): string => {
+    // Handle edge cases
+    if (amount === null || amount === undefined || isNaN(amount)) {
+        return '$0';
+    }
+    
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',

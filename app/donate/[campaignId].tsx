@@ -65,29 +65,81 @@ export default function DonationScreen() {
       return;
     }
 
+    // Check if campaign exists
+    if (!campaign) {
+      showError("Campaign not found");
+      return;
+    }
+
+    // Check campaign status
+    if (campaign.status !== "in_progress") {
+      showError(
+        `This campaign is ${campaign.status}. Only active campaigns can receive donations.`
+      );
+      return;
+    }
+
+    // Validate amount
+    const donationAmount = parseFloat(amount);
+    if (isNaN(donationAmount) || donationAmount <= 0) {
+      showError("Please enter a valid donation amount");
+      return;
+    }
+
     setLoading(true);
 
-    const [donationId, error] = await asyncHandler(
-      createDonation({
+    try {
+      // Prepare donation data - only include message if it has a value
+      const donationData: any = {
         campaignId,
         campaignTitle: campaign?.title,
         donorId: user.uid,
         donorName: user.displayName || "Anonymous",
-        amount: parseFloat(amount),
-        message: message.trim() || undefined,
+        amount: donationAmount,
         isAnonymous,
-      })
-    );
+      };
 
-    setLoading(false);
+      // Only add message if it's not empty
+      if (message.trim()) {
+        donationData.message = message.trim();
+      }
 
-    if (error) {
-      showError(error.message || "Failed to process donation");
-      return;
+      console.log("Creating donation with data:", donationData);
+
+      const [donationId, error] = await asyncHandler(
+        createDonation(donationData)
+      );
+
+      setLoading(false);
+
+      if (error) {
+        console.error("Donation error:", error);
+
+        // Provide more specific error messages
+        if (error.message?.includes("permission")) {
+          showError("Permission denied. Please check your account status.");
+        } else if (error.message?.includes("not found")) {
+          showError("Campaign not found. It may have been deleted.");
+        } else if (error.message?.includes("network")) {
+          showError("Network error. Please check your internet connection.");
+        } else {
+          showError(
+            error.message || "Failed to process donation. Please try again."
+          );
+        }
+        return;
+      }
+
+      console.log("Donation successful:", donationId);
+      showSuccess("Thank you! Your donation has been processed successfully.");
+      setTimeout(() => router.back(), 2000);
+    } catch (err: any) {
+      setLoading(false);
+      console.error("Unexpected error:", err);
+      showError(
+        err.message || "An unexpected error occurred. Please try again."
+      );
     }
-
-    showSuccess("Thank you! Your donation has been processed successfully.");
-    setTimeout(() => router.back(), 2000);
   };
 
   if (loadingCampaign) {

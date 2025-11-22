@@ -230,21 +230,21 @@ export default function ProfileScreen() {
             <View className="flex-row justify-around pt-4 border-t border-gray-100">
               <View className="items-center">
                 <Text className="text-2xl font-bold text-primary-500">
-                  {donations.length}
+                  {user.donationCount || 0}
                 </Text>
                 <Text className="text-gray-500 text-sm">Donations</Text>
               </View>
               <View className="w-px h-12 bg-gray-200" />
               <View className="items-center">
                 <Text className="text-2xl font-bold text-green-600">
-                  {formatCurrency(user.totalDonated)}
+                  {formatCurrency(user.totalDonated || 0)}
                 </Text>
                 <Text className="text-gray-500 text-sm">Total Given</Text>
               </View>
               <View className="w-px h-12 bg-gray-200" />
               <View className="items-center">
                 <Text className="text-2xl font-bold text-secondary-600">
-                  {user.totalCampaigns}
+                  {user.totalCampaigns || 0}
                 </Text>
                 <Text className="text-gray-500 text-sm">Campaigns</Text>
               </View>
@@ -334,24 +334,9 @@ export default function ProfileScreen() {
             </View>
           )}
 
-          {/* Recent Donations */}
-          {donations.length > 0 && (
-            <View>
-              <Text className="text-xl font-bold text-gray-900 mb-4">
-                Your Recent Donations
-              </Text>
-              {donations.map((donation) => (
-                <DonationCard
-                  key={donation.id}
-                  donation={donation}
-                  showCampaign
-                />
-              ))}
-            </View>
-          )}
 
-          {/* Empty State */}
-          {donations.length === 0 && (
+          {/* Empty State - Only show if user truly has no donations */}
+          {(!user.donationCount || user.donationCount === 0) && (
             <View className="items-center justify-center mb-2">
               <Ionicons name="heart-outline" size={64} color="#D1D5DB" />
               <Text className="text-gray-500 text-center">

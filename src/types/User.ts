@@ -5,6 +5,7 @@ export interface User {
     photoURL?: string;
     role: 'user' | 'admin'; // Required field
     totalDonated: number; // Total amount donated by user
+    donationCount: number; // Total number of donations made
     totalCampaigns: number; // Total campaigns created by user
     createdAt: number;
     updatedAt: number;
