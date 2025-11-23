@@ -78,11 +78,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </Text>
 
           {/* Buttons */}
-          <View className="gap-3">
+          <View className="flex flex-row justify-center gap-3">
             {/* Confirm Button */}
             <TouchableOpacity
               onPress={onConfirm}
-              className={`${getConfirmButtonClass()} rounded-full py-4 px-6`}
+              className={`${getConfirmButtonClass()} rounded-full py-2 px-10`}
               style={{
                 shadowColor: getIconColor(),
                 shadowOffset: { width: 0, height: 4 },
@@ -100,7 +100,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {/* Cancel Button */}
             <TouchableOpacity
               onPress={onCancel}
-              className="bg-gray-100 rounded-full py-4 px-6 border-2 border-gray-200"
+              className="bg-gray-100 rounded-full py-2 px-10 border-2 border-gray-200"
               activeOpacity={0.7}
             >
               <Text className="text-gray-700 font-bold text-center text-base">

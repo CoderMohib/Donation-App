@@ -1,26 +1,18 @@
 import { CampaignCard } from "@/src/components/cards";
 import { DashboardLayout } from "@/src/components/layouts";
+import { ProfileDropdown } from "@/src/components/navigation";
 import { CampaignListSkeleton } from "@/src/components/skeletons";
 import { subscribeToCampaigns } from "@/src/firebase";
-import { useAuth } from "@/src/hooks/useAuth";
 import { Campaign } from "@/src/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  FlatList,
-  Image,
-  RefreshControl,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { FlatList, Image, RefreshControl, Text, View } from "react-native";
 
 const CAMPAIGNS_PER_PAGE = 20;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -74,22 +66,7 @@ export default function HomeScreen() {
           />
         </View>
       }
-      rightAction={
-        <TouchableOpacity
-          onPress={() => router.push("/profile")}
-          className="w-10 h-10 items-center justify-center"
-        >
-          {user?.photoURL ? (
-            <Image
-              source={{ uri: user.photoURL }}
-              className="w-9 h-9 rounded-full"
-              resizeMode="cover"
-            />
-          ) : (
-            <Ionicons name="person-circle-outline" size={30} color="#ff7a5e" />
-          )}
-        </TouchableOpacity>
-      }
+      rightAction={<ProfileDropdown />}
       scrollable={false}
     >
       {/* Header Section */}
