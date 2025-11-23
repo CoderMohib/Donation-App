@@ -1,5 +1,5 @@
 import { PrimaryButton } from "@/src/components/buttons";
-import { CampaignCard, DonationCard } from "@/src/components/cards";
+import { CampaignCard } from "@/src/components/cards";
 import { ConfirmDialog, Toast } from "@/src/components/feedback";
 import { DashboardLayout } from "@/src/components/layouts";
 import { getCurrentUser, getUserDonations, logOut } from "@/src/firebase";
@@ -216,6 +216,13 @@ export default function ProfileScreen() {
               </Text>
               <Text className="text-gray-500 mb-4">{user.email}</Text>
 
+              {/* Bio */}
+              {(user as any).bio && (
+                <Text className="text-gray-600 text-center text-sm mb-4 px-4">
+                  {(user as any).bio}
+                </Text>
+              )}
+
               {/* Role Badge */}
               {user.role === "admin" && (
                 <View className="bg-purple-100 px-4 py-1 rounded-full">
@@ -333,7 +340,6 @@ export default function ProfileScreen() {
               )}
             </View>
           )}
-
 
           {/* Empty State - Only show if user truly has no donations */}
           {(!user.donationCount || user.donationCount === 0) && (

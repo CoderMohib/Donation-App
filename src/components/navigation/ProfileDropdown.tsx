@@ -156,6 +156,19 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  onPress={() => {
+                    setShowDropdown(false);
+                    router.push("/settings");
+                  }}
+                  className="flex-row items-center px-4 py-3 border-b border-gray-100"
+                >
+                  <Ionicons name="settings-outline" size={20} color="#374151" />
+                  <Text className="ml-3 text-gray-900 font-medium">
+                    Settings
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   onPress={handleLogout}
                   className="flex-row items-center px-4 py-3"
                 >
