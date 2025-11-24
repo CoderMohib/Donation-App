@@ -38,7 +38,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.9}
-      className="bg-white rounded-2xl shadow-lg mb-1 overflow-hidden"
+      className="bg-white rounded-2xl shadow-lg mb-3 overflow-hidden"
     >
       {/* Campaign Image */}
       <View className="relative">

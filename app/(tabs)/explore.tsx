@@ -151,6 +151,7 @@ export default function ExploreScreen() {
                   onRefresh={handleRefresh}
                 />
               }
+              contentContainerStyle={{ paddingBottom: 30 }}
               showsVerticalScrollIndicator={false}
             />
           )}
