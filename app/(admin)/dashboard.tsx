@@ -1,20 +1,28 @@
-import { DashboardLayout } from '@/src/components/layouts';
-import { db } from '@/src/firebase/firebase';
-import { useAuth } from '@/src/hooks';
-import { Donation } from '@/src/types';
-import { formatCurrency } from '@/src/utils';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { collection, getCountFromServer, getDocs, limit, orderBy, query } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import { DashboardLayout } from "@/src/components/layouts";
+import { db } from "@/src/firebase/firebase";
+import { useAuth } from "@/src/hooks";
+import { Donation } from "@/src/types";
+import { formatCurrency } from "@/src/utils";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
-    ActivityIndicator,
-    FlatList,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+  collection,
+  getCountFromServer,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface Stats {
   totalUsers: number;
@@ -34,6 +42,7 @@ export default function AdminDashboardScreen() {
   });
   const [recentDonations, setRecentDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -41,13 +50,13 @@ export default function AdminDashboardScreen() {
 
     // Check if user is logged in
     if (!user) {
-      router.replace('/login');
+      router.replace("/login");
       return;
     }
 
     // Check if user is admin
-    if (user.role !== 'admin') {
-      router.replace('/(tabs)');
+    if (user.role !== "admin") {
+      router.replace("/(tabs)");
       return;
     }
 
@@ -62,22 +71,24 @@ export default function AdminDashboardScreen() {
 
       // Get counts
       const [usersCount, campaignsCount, donationsCount] = await Promise.all([
-        getCountFromServer(collection(db, 'users')),
-        getCountFromServer(collection(db, 'campaigns')),
-        getCountFromServer(collection(db, 'donations')),
+        getCountFromServer(collection(db, "users")),
+        getCountFromServer(collection(db, "campaigns")),
+        getCountFromServer(collection(db, "donations")),
       ]);
 
-      // Get recent donations and calculate total amount
+      // Get recent donations (limit to 5 for dashboard)
       const donationsQuery = query(
-        collection(db, 'donations'),
-        orderBy('donatedAt', 'desc'),
-        limit(10)
+        collection(db, "donations"),
+        orderBy("donatedAt", "desc"),
+        limit(5)
       );
       const donationsSnapshot = await getDocs(donationsQuery);
-      const donations = donationsSnapshot.docs.map((doc) => doc.data() as Donation);
+      const donations = donationsSnapshot.docs.map(
+        (doc) => doc.data() as Donation
+      );
 
       // Calculate total amount from all donations
-      const allDonationsQuery = query(collection(db, 'donations'));
+      const allDonationsQuery = query(collection(db, "donations"));
       const allDonationsSnapshot = await getDocs(allDonationsQuery);
       const totalAmount = allDonationsSnapshot.docs.reduce((sum, doc) => {
         const donation = doc.data() as Donation;
@@ -96,6 +107,12 @@ export default function AdminDashboardScreen() {
       setError(err as Error);
       setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadDashboardData();
+    setRefreshing(false);
   };
 
   const StatCard = ({
@@ -127,10 +144,10 @@ export default function AdminDashboardScreen() {
       <View className="flex-row justify-between items-start mb-2">
         <View className="flex-1">
           <Text className="text-gray-900 font-semibold" numberOfLines={1}>
-            {item.campaignTitle || 'Unknown Campaign'}
+            {item.campaignTitle || "Unknown Campaign"}
           </Text>
           <Text className="text-gray-500 text-sm mt-1">
-            by {item.isAnonymous ? 'Anonymous' : item.donorName}
+            by {item.isAnonymous ? "Anonymous" : item.donorName}
           </Text>
         </View>
         <Text className="text-green-600 font-bold text-lg">
@@ -143,7 +160,7 @@ export default function AdminDashboardScreen() {
         </Text>
       )}
       <Text className="text-gray-400 text-xs mt-2">
-        {new Date(item.donatedAt).toLocaleDateString()} at{' '}
+        {new Date(item.donatedAt).toLocaleDateString()} at{" "}
         {new Date(item.donatedAt).toLocaleTimeString()}
       </Text>
     </View>
@@ -165,7 +182,9 @@ export default function AdminDashboardScreen() {
       <DashboardLayout title="Admin Dashboard" showBackButton={false}>
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-6xl mb-4">⚠️</Text>
-          <Text className="text-gray-900 text-xl font-bold mb-2">Error Loading Dashboard</Text>
+          <Text className="text-gray-900 text-xl font-bold mb-2">
+            Error Loading Dashboard
+          </Text>
           <Text className="text-gray-500 text-center">{error.message}</Text>
           <TouchableOpacity
             onPress={loadDashboardData}
@@ -179,11 +198,27 @@ export default function AdminDashboardScreen() {
   }
 
   return (
-    <DashboardLayout title="Admin Dashboard" showBackButton={false} scrollable={false}>
-      <ScrollView className="flex-1 bg-gray-50">
+    <DashboardLayout
+      title="Admin Dashboard"
+      showBackButton={false}
+      scrollable={false}
+    >
+      <ScrollView
+        className="flex-1 bg-gray-50"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={["#ff7a5e"]}
+            tintColor="#ff7a5e"
+          />
+        }
+      >
         {/* Header */}
         <View className="px-4 pt-4 pb-2">
-          <Text className="text-gray-900 text-2xl font-bold mb-1">Welcome, Admin</Text>
+          <Text className="text-gray-900 text-2xl font-bold mb-1">
+            Welcome, Admin
+          </Text>
           <Text className="text-gray-500">{`Here's what's happening with your platform`}</Text>
         </View>
 
@@ -225,10 +260,12 @@ export default function AdminDashboardScreen() {
 
         {/* Quick Actions */}
         <View className="px-4 py-4">
-          <Text className="text-gray-900 text-lg font-bold mb-3">Quick Actions</Text>
+          <Text className="text-gray-900 text-lg font-bold mb-3">
+            Quick Actions
+          </Text>
           <View className="flex-row gap-3">
             <TouchableOpacity
-              onPress={() => router.push('/(admin)/users')}
+              onPress={() => router.push("/(admin)/users")}
               className="flex-1 bg-white rounded-xl p-4 items-center shadow-sm border border-gray-100"
             >
               <View className="bg-secondary-100 p-3 rounded-full mb-2">
@@ -237,20 +274,35 @@ export default function AdminDashboardScreen() {
               <Text className="text-gray-900 font-semibold">Manage Users</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => router.push('/(admin)/campaigns')}
+              onPress={() => router.push("/(admin)/campaigns")}
               className="flex-1 bg-white rounded-xl p-4 items-center shadow-sm border border-gray-100"
             >
               <View className="bg-primary-100 p-3 rounded-full mb-2">
                 <Ionicons name="heart" size={24} color="#ff7a5e" />
               </View>
-              <Text className="text-gray-900 font-semibold">Manage Campaigns</Text>
+              <Text className="text-gray-900 font-semibold">
+                Manage Campaigns
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Recent Activity */}
         <View className="px-4 py-4 pb-8">
-          <Text className="text-gray-900 text-lg font-bold mb-3">Recent Donations</Text>
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-gray-900 text-lg font-bold">
+              Recent Donations
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(admin)/donations")}
+              className="flex-row items-center"
+            >
+              <Text className="text-primary-500 font-semibold text-sm mr-1">
+                View All
+              </Text>
+              <Ionicons name="arrow-forward" size={16} color="#ff7a5e" />
+            </TouchableOpacity>
+          </View>
           {recentDonations.length === 0 ? (
             <View className="bg-white border border-gray-200 rounded-xl p-8 items-center">
               <Text className="text-gray-400">No donations yet</Text>
