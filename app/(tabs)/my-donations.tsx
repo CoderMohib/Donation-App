@@ -1,6 +1,7 @@
 import { PrimaryButton } from "@/src/components/buttons";
 import { DonationCard } from "@/src/components/cards";
 import { DashboardLayout } from "@/src/components/layouts";
+import { ProfileDropdown } from "@/src/components/navigation";
 import { auth, getUserDonations } from "@/src/firebase";
 import { Donation } from "@/src/types";
 import { asyncHandler } from "@/src/utils";
@@ -53,7 +54,12 @@ export default function MyDonationsScreen() {
     }
 
     if (data) {
-      console.log("My Donations: Loaded donations:", data.length, "donations", data);
+      console.log(
+        "My Donations: Loaded donations:",
+        data.length,
+        "donations",
+        data
+      );
       setDonations(data);
       // Check if there might be more donations
       setHasMore(data.length >= limit);
@@ -125,6 +131,7 @@ export default function MyDonationsScreen() {
           />
         </View>
       }
+      rightAction={<ProfileDropdown />}
     >
       <View className="px-4 py-6 flex-1">
         {donations.length === 0 ? (

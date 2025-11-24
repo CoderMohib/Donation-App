@@ -2,7 +2,7 @@ import { CampaignCard } from "@/src/components/cards";
 import { ConfirmDialog, Toast } from "@/src/components/feedback";
 import { SearchBar } from "@/src/components/inputs";
 import { DashboardLayout } from "@/src/components/layouts";
-import { FilterTabs } from "@/src/components/navigation";
+import { FilterTabs, ProfileDropdown } from "@/src/components/navigation";
 import { CampaignListSkeleton } from "@/src/components/skeletons";
 import {
   deleteCampaign,
@@ -334,6 +334,7 @@ export default function MyCampaignsScreen() {
           />
         </View>
       }
+      rightAction={<ProfileDropdown />}
     >
       <Toast
         visible={toast.visible}

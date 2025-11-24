@@ -86,7 +86,7 @@ export default function SettingsScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ["images"],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -281,7 +281,7 @@ export default function SettingsScreen() {
                   {displayPhotoURL ? (
                     <Image
                       source={{ uri: displayPhotoURL }}
-                      className="w-24 h-24 rounded-full"
+                      className="w-[96px] h-[96px] rounded-full"
                     />
                   ) : (
                     <Text className="text-white text-4xl font-bold">
@@ -438,7 +438,7 @@ export default function SettingsScreen() {
               {/* Cancel Button */}
               <TouchableOpacity
                 onPress={handleCancel}
-                className="flex-1 bg-gray-100 rounded-full py-3 items-center border border-gray-200"
+                className="flex-1 bg-gray-100 rounded-full py-4 items-center border border-gray-200"
                 disabled={saving}
               >
                 <Text className="text-gray-700 font-semibold text-base">

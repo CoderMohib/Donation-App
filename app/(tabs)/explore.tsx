@@ -1,7 +1,7 @@
 import { CampaignCard } from "@/src/components/cards";
 import { SearchBar } from "@/src/components/inputs";
 import { DashboardLayout } from "@/src/components/layouts";
-import { FilterTabs } from "@/src/components/navigation";
+import { FilterTabs, ProfileDropdown } from "@/src/components/navigation";
 import { CampaignListSkeleton } from "@/src/components/skeletons";
 import { getCampaigns, searchCampaigns } from "@/src/firebase";
 import { Campaign } from "@/src/types";
@@ -96,6 +96,7 @@ export default function ExploreScreen() {
           />
         </View>
       }
+      rightAction={<ProfileDropdown />}
     >
       <View className="flex-1">
         {/* Search Bar */}
