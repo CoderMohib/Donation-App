@@ -4,4 +4,5 @@ export * from './cards';
 export * from './inputs';
 export * from './layouts';
 export * from './navigation';
+export * from './notifications/NotificationBell';
 

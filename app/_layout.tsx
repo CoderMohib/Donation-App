@@ -1,5 +1,5 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useAuth } from "@/src/hooks";
+import { useAuth, useNotifications } from "@/src/hooks";
 import {
   DarkTheme,
   DefaultTheme,
@@ -21,6 +21,10 @@ export default function RootLayout() {
   const { user, isLoading: authLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Initialize notifications
+  useNotifications();
+
   const [appIsReady, setAppIsReady] = useState(false);
   const [initializationError, setInitializationError] = useState<Error | null>(
     null
@@ -127,6 +131,9 @@ export default function RootLayout() {
 
           {/* Settings Screen */}
           <Stack.Screen name="settings" options={{ headerShown: false }} />
+
+          {/* Notifications Screen */}
+          <Stack.Screen name="notifications" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="dark" />
       </View>

@@ -7,6 +7,7 @@ export interface User {
     totalDonated: number; // Total amount donated by user
     donationCount: number; // Total number of donations made
     totalCampaigns: number; // Total campaigns created by user
+    pushToken?: string; // Expo push notification token
     createdAt: number;
     updatedAt: number;
 }
