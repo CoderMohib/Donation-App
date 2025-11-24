@@ -360,7 +360,11 @@ export default function ProfileScreen() {
               <View className="mt-2">
                 <PrimaryButton
                   title="Browse Campaigns"
-                  onPress={() => router.push("/(tabs)")}
+                  onPress={() =>
+                    router.push(
+                      user.role === "admin" ? "/(admin)/campaigns" : "/(tabs)"
+                    )
+                  }
                   size="medium"
                 />
               </View>
