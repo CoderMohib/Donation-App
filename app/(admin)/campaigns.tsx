@@ -18,6 +18,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   Text,
   TouchableOpacity,
   View,
@@ -38,6 +39,7 @@ export default function AdminCampaignsScreen() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [displayLimit, setDisplayLimit] = useState(10);
+  const [refreshing, setRefreshing] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     visible: boolean;
     type: "start" | "end" | "delete" | null;
@@ -46,7 +48,7 @@ export default function AdminCampaignsScreen() {
   }>({ visible: false, type: null, campaignId: "", campaignTitle: "" });
 
   // Fetch all campaigns (no ownerId filter for admin)
-  const { campaigns, loading, error } = useCampaigns({
+  const { campaigns, loading, error, refetch } = useCampaigns({
     status:
       selectedStatus === "all"
         ? undefined
@@ -85,6 +87,13 @@ export default function AdminCampaignsScreen() {
   useEffect(() => {
     setDisplayLimit(10);
   }, [selectedStatus, searchQuery]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setDisplayLimit(10); // Reset to initial limit on refresh
+    setRefreshing(false);
+  };
 
   const handleLoadMore = () => {
     setDisplayLimit((prev) => prev + 10);
@@ -347,7 +356,7 @@ export default function AdminCampaignsScreen() {
         </View>
 
         {/* Filter Tabs */}
-        <View className="px-2 mb-2">
+        <View className="mb-2">
           <FilterTabs
             tabs={STATUS_FILTERS}
             activeTab={selectedStatus}
@@ -359,7 +368,9 @@ export default function AdminCampaignsScreen() {
         {error ? (
           renderError()
         ) : loading ? (
-          <CampaignListSkeleton count={5} />
+          <View className="px-4">
+            <CampaignListSkeleton count={5} />
+          </View>
         ) : (
           <FlatList
             data={displayedCampaigns}
@@ -374,6 +385,14 @@ export default function AdminCampaignsScreen() {
             onEndReached={hasMore ? handleLoadMore : undefined}
             onEndReachedThreshold={0.5}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                colors={["#10b981"]} // primary-500 green color
+                tintColor="#10b981"
+              />
+            }
           />
         )}
       </View>
