@@ -308,7 +308,6 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 - **NativeWind** - Tailwind CSS for React Native
 - **Tailwind CSS** - Utility-first CSS framework
 - **Responsive Design** - Mobile-first approach
-- **Dark Mode Support** - System-based theme switching
 
 ### Type Safety
 - **TypeScript** - Full type coverage
