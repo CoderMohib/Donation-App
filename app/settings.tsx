@@ -87,9 +87,9 @@ export default function SettingsScreen() {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
         quality: 0.8,
+        selectionLimit: 1,
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -300,9 +300,11 @@ export default function SettingsScreen() {
                 </View>
               </TouchableOpacity>
 
-              <Text className="text-gray-500 text-xs text-center">
-                Tap to change photo
-              </Text>
+              {isEditing && (
+                <Text className="text-gray-500 text-xs text-center">
+                  Tap to change photo
+                </Text>
+              )}
               {newImageUri && (
                 <View className="bg-green-50 px-3 py-1 rounded-full mt-2">
                   <Text className="text-green-600 text-xs font-medium">

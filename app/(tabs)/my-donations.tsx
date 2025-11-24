@@ -36,17 +36,12 @@ export default function MyDonationsScreen() {
   const loadDonations = async (limit: number = DONATIONS_PER_PAGE) => {
     const user = auth?.currentUser;
     if (!user) {
-      console.log("My Donations: No user logged in");
+      
       setLoading(false);
       return;
     }
 
-    console.log(
-      "My Donations: Loading donations for user:",
-      user.uid,
-      "limit:",
-      limit
-    );
+    
     const [data, error] = await asyncHandler(getUserDonations(user.uid, limit));
 
     if (error) {
@@ -54,17 +49,11 @@ export default function MyDonationsScreen() {
     }
 
     if (data) {
-      console.log(
-        "My Donations: Loaded donations:",
-        data.length,
-        "donations",
-        data
-      );
       setDonations(data);
       // Check if there might be more donations
       setHasMore(data.length >= limit);
     } else {
-      console.log("My Donations: No donations data returned");
+      
       setHasMore(false);
     }
     setLoading(false);

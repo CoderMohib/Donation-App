@@ -183,6 +183,15 @@ export default function ProfileScreen() {
         <View className="px-4 py-5">
           {/* Profile Header */}
           <View className="bg-white rounded-2xl p-6 shadow-lg mb-6">
+            {/* Settings Icon */}
+            <TouchableOpacity
+              onPress={() => router.push("/settings")}
+              className="absolute top-4 right-4 w-10 h-10 bg-gray-100 rounded-full items-center justify-center z-10"
+              activeOpacity={0.7}
+            >
+              <Ionicons name="settings-outline" size={20} color="#6B7280" />
+            </TouchableOpacity>
+
             <View className="items-center mb-4">
               {/* Profile Image */}
               <LinearGradient

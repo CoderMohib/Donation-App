@@ -26,6 +26,7 @@ export default function CreateCampaignScreen() {
     fullDescription: string;
     targetAmount: number;
     category: Campaign["category"];
+    imageUri?: string;
   }) => {
     if (!user) {
       showError("You must be logged in to create a campaign");
@@ -34,13 +35,40 @@ export default function CreateCampaignScreen() {
 
     setLoading(true);
 
+    let imageUrl: string | null = null;
+
+    // Upload image to Cloudinary if provided
+    if (data.imageUri) {
+      const { uploadCampaignImage } = await import("@/src/firebase/storage");
+
+      // Generate a temporary ID for the campaign folder
+      const tempId = `temp_${Date.now()}`;
+
+      const [uploadedUrl, uploadError] = await asyncHandler(
+        uploadCampaignImage(tempId, data.imageUri)
+      );
+
+      if (uploadError) {
+        setLoading(false);
+        showError("Failed to upload image. Please try again.");
+        return;
+      }
+
+      imageUrl = uploadedUrl;
+    }
+
     const [campaignId, error] = await asyncHandler(
       createCampaign({
-        ...data,
+        title: data.title,
+        shortDescription: data.shortDescription,
+        fullDescription: data.fullDescription,
+        targetAmount: data.targetAmount,
+        category: data.category,
         ownerId: user.id,
         ownerName: user.name,
         status: "draft",
         donatedAmount: 0,
+        ...(imageUrl && { imageUrl }),
       })
     );
 

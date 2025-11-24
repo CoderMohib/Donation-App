@@ -1,49 +1,85 @@
-import {
-    deleteObject,
-    getDownloadURL,
-    ref,
-    uploadBytes,
-} from 'firebase/storage';
-import { isStorageReady, storage } from './firebase';
+import { CloudinaryUploadResponse } from '@/src/types/cloudinary';
 
 /**
- * Upload an image to Firebase Storage
+ * Cloudinary configuration from environment variables
+ */
+const getCloudinaryConfig = () => {
+    const cloudName = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+        throw new Error(
+            'Cloudinary configuration is missing. Please set EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME and EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET in your .env file.'
+        );
+    }
+
+    return { cloudName, uploadPreset };
+};
+
+/**
+ * Upload an image to Cloudinary
  */
 export const uploadImage = async (
     uri: string,
-    path: string
+    folder: string
 ): Promise<string> => {
-    if (!isStorageReady() || !storage) {
-        throw new Error(
-            'Firebase Storage is not available. Please upgrade your Firebase plan or enable Storage in your Firebase console.'
-        );
-    }
-    
     try {
-        // Fetch the image as a blob
-        const response = await fetch(uri);
-        const blob = await response.blob();
+        const { cloudName, uploadPreset } = getCloudinaryConfig();
 
-        // Create a reference to the storage location
-        const storageRef = ref(storage, path);
+        // Create form data
+        const formData = new FormData();
+        
+        // Extract filename from URI
+        const filename = uri.split('/').pop() || 'image.jpg';
+        
+        // Add image file to form data
+        formData.append('file', {
+            uri,
+            type: 'image/jpeg',
+            name: filename,
+        } as any);
+        
+        formData.append('upload_preset', uploadPreset);
+        formData.append('folder', folder);
 
-        // Upload the blob
-        await uploadBytes(storageRef, blob);
+        // Upload to Cloudinary
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
+        );
 
-        // Get and return the download URL
-        const downloadURL = await getDownloadURL(storageRef);
-        return downloadURL;
-    } catch (error: any) {
-        // Check for quota/billing errors
-        if (error?.code === 'storage/quota-exceeded' || 
-            error?.message?.includes('upgrade') || 
-            error?.message?.includes('plan')) {
+        if (!response.ok) {
+            const errorData = await response.json();
             throw new Error(
-                'Storage quota exceeded. Please upgrade your Firebase Storage plan in the Firebase Console.'
+                errorData.error?.message || 'Failed to upload image to Cloudinary'
             );
         }
-        console.error('Error uploading image:', error);
-        throw error;
+
+        const data: CloudinaryUploadResponse = await response.json();
+        
+        // Return the secure URL
+        return data.secure_url;
+    } catch (error: any) {
+        console.error('Error uploading image to Cloudinary:', error);
+        
+        // Provide user-friendly error messages
+        if (error.message?.includes('configuration')) {
+            throw error;
+        }
+        
+        if (error.message?.includes('network') || error.message?.includes('fetch')) {
+            throw new Error(
+                'Network error. Please check your internet connection and try again.'
+            );
+        }
+        
+        throw new Error('Failed to upload image. Please try again.');
     }
 };
 
@@ -54,8 +90,8 @@ export const uploadProfilePicture = async (
     userId: string,
     imageUri: string
 ): Promise<string> => {
-    const path = `profiles/${userId}/profile_${Date.now()}.jpg`;
-    return uploadImage(imageUri, path);
+    const folder = `donation-app/profiles/${userId}`;
+    return uploadImage(imageUri, folder);
 };
 
 /**
@@ -65,31 +101,19 @@ export const uploadCampaignImage = async (
     campaignId: string,
     imageUri: string
 ): Promise<string> => {
-    const path = `campaigns/${campaignId}/image_${Date.now()}.jpg`;
-    return uploadImage(imageUri, path);
+    const folder = `donation-app/campaigns/${campaignId}`;
+    return uploadImage(imageUri, folder);
 };
 
 /**
- * Delete an image from Firebase Storage
+ * Delete an image from Cloudinary
+ * Note: This requires server-side implementation with API secret
+ * For now, we'll keep this as a placeholder
  */
 export const deleteImage = async (imageUrl: string): Promise<void> => {
-    if (!isStorageReady() || !storage) {
-        throw new Error('Firebase Storage is not available.');
-    }
-    
-    try {
-        const imageRef = ref(storage, imageUrl);
-        await deleteObject(imageRef);
-    } catch (error: any) {
-        // Check for quota/billing errors
-        if (error?.code === 'storage/quota-exceeded' || 
-            error?.message?.includes('upgrade') || 
-            error?.message?.includes('plan')) {
-            throw new Error(
-                'Storage quota exceeded. Please upgrade your Firebase Storage plan.'
-            );
-        }
-        console.error('Error deleting image:', error);
-        throw error;
-    }
+    // Cloudinary image deletion requires authenticated API calls
+    // This would need to be implemented on a backend server
+    // For the free tier with unsigned uploads, deletion is typically
+    // handled through the Cloudinary dashboard
+    console.warn('Image deletion is not implemented for client-side Cloudinary uploads');
 };

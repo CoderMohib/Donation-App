@@ -1,10 +1,12 @@
 import { Campaign } from "@/src/types";
 import { validateAmount } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   TextInput as RNTextInput,
   ScrollView,
   Text,
@@ -34,6 +36,7 @@ interface CampaignFormProps {
     fullDescription: string;
     targetAmount: number;
     category: Campaign["category"];
+    imageUri?: string;
   }) => void;
   onReset?: () => void;
 }
@@ -58,6 +61,8 @@ export const CampaignForm: React.FC<CampaignFormProps> = ({
   const [category, setCategory] = useState<Campaign["category"]>(
     initialData?.category || "other"
   );
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [errors, setErrors] = useState<{
     title?: string;
     shortDescription?: string;
@@ -114,6 +119,31 @@ export const CampaignForm: React.FC<CampaignFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const pickImage = async () => {
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== "granted") {
+        alert("Sorry, we need camera roll permissions to upload images!");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: false,
+        quality: 0.8,
+        selectionLimit: 1,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      alert("Failed to pick image");
+    }
+  };
+
   const handleSubmit = () => {
     if (!validateForm()) return;
 
@@ -123,6 +153,7 @@ export const CampaignForm: React.FC<CampaignFormProps> = ({
       fullDescription: fullDescription.trim(),
       targetAmount: parseFloat(targetAmount),
       category,
+      imageUri: imageUri || undefined,
     });
   };
 
@@ -132,6 +163,7 @@ export const CampaignForm: React.FC<CampaignFormProps> = ({
     setFullDescription("");
     setTargetAmount("");
     setCategory("other");
+    setImageUri(null);
     setErrors({});
     onReset?.();
   };
@@ -344,20 +376,51 @@ export const CampaignForm: React.FC<CampaignFormProps> = ({
         </View>
       </View>
 
-      {/* Image Placeholder */}
+      {/* Campaign Image Upload */}
       <View className="mb-4">
         <Text className="text-gray-700 font-semibold mb-3 ml-1 text-base">
-          Campaign Image
+          Campaign Image (Optional)
         </Text>
-        <View className="bg-gray-50 border-2 border-gray-200 border-dashed rounded-2xl p-8 items-center justify-center">
-          <Ionicons name="image-outline" size={48} color="#D1D5DB" />
-          <Text className="text-gray-400 text-center mt-3 font-medium">
-            Image upload coming soon
-          </Text>
-          <Text className="text-gray-500 text-xs text-center mt-1">
-            Campaigns will use a default image for now
-          </Text>
-        </View>
+        <TouchableOpacity
+          onPress={pickImage}
+          disabled={uploadingImage}
+          activeOpacity={0.7}
+          className="bg-gray-50 border-2 border-gray-200 border-dashed rounded-2xl overflow-hidden"
+        >
+          {imageUri ? (
+            <View className="relative">
+              <Image
+                source={{ uri: imageUri }}
+                className="w-full h-48"
+                resizeMode="cover"
+              />
+              <View className="absolute top-2 right-2 bg-white rounded-full p-2">
+                <Ionicons name="pencil" size={20} color="#ff7a5e" />
+              </View>
+            </View>
+          ) : (
+            <View className="p-8 items-center justify-center">
+              <Ionicons name="image-outline" size={48} color="#D1D5DB" />
+              <Text className="text-gray-400 text-center mt-3 font-medium">
+                Tap to add campaign image
+              </Text>
+              <Text className="text-gray-500 text-xs text-center mt-1">
+                Recommended: 16:9 aspect ratio
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        {imageUri && (
+          <TouchableOpacity
+            onPress={() => setImageUri(null)}
+            className="mt-2 flex-row items-center justify-center"
+          >
+            <Ionicons name="trash-outline" size={16} color="#EF4444" />
+            <Text className="text-red-500 text-sm ml-1 font-medium">
+              Remove Image
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Action Buttons */}
