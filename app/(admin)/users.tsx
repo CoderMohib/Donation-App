@@ -1,8 +1,9 @@
+import { ConfirmDialog, Toast } from "@/src/components/feedback";
 import { SearchBar } from "@/src/components/inputs";
 import { DashboardLayout } from "@/src/components/layouts";
 import { deleteUser, promoteToAdmin } from "@/src/firebase/auth";
 import { db } from "@/src/firebase/firebase";
-import { useAuth } from "@/src/hooks";
+import { useAuth, useToast } from "@/src/hooks";
 import { User } from "@/src/types";
 import { asyncHandler } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,8 +21,8 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
+  Image,
   RefreshControl,
   Text,
   TouchableOpacity,
@@ -33,6 +34,7 @@ const USERS_PER_PAGE = 10;
 export default function AdminUsersScreen() {
   const router = useRouter();
   const { user: currentUser, isLoading: authLoading } = useAuth();
+  const { toast, showSuccess, showError, hideToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,6 +44,12 @@ export default function AdminUsersScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [lastDoc, setLastDoc] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    visible: boolean;
+    type: "promote" | "delete" | null;
+    userId: string;
+    userName: string;
+  }>({ visible: false, type: null, userId: "", userName: "" });
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -164,61 +172,84 @@ export default function AdminUsersScreen() {
     }
   };
 
-  const handlePromoteToAdmin = async (userId: string, userName: string) => {
-    Alert.alert(
-      "Promote to Admin",
-      `Are you sure you want to promote ${userName} to admin? They will have full access to the admin panel.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Promote",
-          style: "default",
-          onPress: async () => {
-            const [, error] = await asyncHandler(promoteToAdmin(userId));
-            if (error) {
-              Alert.alert("Error", error.message);
-            } else {
-              Alert.alert("Success", `${userName} has been promoted to admin.`);
-              loadUsers(); // Reload users
-            }
-          },
-        },
-      ]
-    );
+  const handlePromoteToAdmin = (userId: string, userName: string) => {
+    setConfirmDialog({
+      visible: true,
+      type: "promote",
+      userId,
+      userName,
+    });
   };
 
-  const handleDeleteUser = async (userId: string, userName: string) => {
+  const handleDeleteUser = (userId: string, userName: string) => {
     if (userId === currentUser?.id) {
-      Alert.alert("Error", "You cannot delete your own account.");
+      showError("You cannot delete your own account.");
       return;
     }
 
-    Alert.alert(
-      "Delete User",
-      `Are you sure you want to delete ${userName}? This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            const [, error] = await asyncHandler(deleteUser(userId));
-            if (error) {
-              Alert.alert("Error", error.message);
-            } else {
-              Alert.alert("Success", `${userName} has been deleted.`);
-              loadUsers(); // Reload users
-            }
-          },
-        },
-      ]
-    );
+    setConfirmDialog({
+      visible: true,
+      type: "delete",
+      userId,
+      userName,
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    const { type, userId, userName } = confirmDialog;
+    setConfirmDialog({
+      visible: false,
+      type: null,
+      userId: "",
+      userName: "",
+    });
+
+    if (type === "promote") {
+      const [, error] = await asyncHandler(promoteToAdmin(userId));
+      if (error) {
+        showError(error.message || "Failed to promote user");
+      } else {
+        showSuccess(`${userName} has been promoted to admin!`);
+        loadUsers(); // Reload users
+      }
+    } else if (type === "delete") {
+      const [, error] = await asyncHandler(deleteUser(userId));
+      if (error) {
+        showError(error.message || "Failed to delete user");
+      } else {
+        showSuccess(`${userName} has been deleted successfully!`);
+        loadUsers(); // Reload users
+      }
+    }
+  };
+
+  const handleCancelAction = () => {
+    setConfirmDialog({
+      visible: false,
+      type: null,
+      userId: "",
+      userName: "",
+    });
   };
 
   const renderUser = ({ item }: { item: User }) => (
     <View className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
       {/* User Info */}
       <View className="flex-row items-start justify-between mb-3">
+        {/* Profile Image */}
+        <View className="mr-3">
+          {item.photoURL ? (
+            <Image
+              source={{ uri: item.photoURL }}
+              className="w-16 h-16 rounded-full border-2 border-primary-200"
+            />
+          ) : (
+            <View className="w-16 h-16 rounded-full bg-gray-200 border-2 border-gray-300 items-center justify-center">
+              <Ionicons name="person" size={32} color="#9ca3af" />
+            </View>
+          )}
+        </View>
+
         <View className="flex-1">
           <View className="flex-row items-center gap-2 mb-1">
             <Text className="text-gray-900 font-bold text-lg">{item.name}</Text>
@@ -261,15 +292,15 @@ export default function AdminUsersScreen() {
         {item.role !== "admin" && (
           <TouchableOpacity
             onPress={() => handlePromoteToAdmin(item.id, item.name)}
-            className="flex-1 bg-secondary-500 rounded-lg py-2 px-3 flex-row items-center justify-center"
+            className=" bg-secondary-500 rounded-full py-2 px-3 flex-row items-center justify-center"
           >
             <Ionicons name="arrow-up" size={16} color="white" />
-            <Text className="text-white font-semibold ml-2">Promote</Text>
+            <Text className="text-white font-semibold ml-1">Promote</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
           onPress={() => handleDeleteUser(item.id, item.name)}
-          className="bg-primary-600 rounded-lg py-2 px-3 flex-row items-center justify-center"
+          className="bg-primary-600 rounded-full py-2 px-3 flex-row items-center justify-center"
           disabled={item.id === currentUser?.id}
         >
           <Ionicons name="trash" size={16} color="white" />
@@ -340,6 +371,32 @@ export default function AdminUsersScreen() {
       showBackButton={false}
       scrollable={false}
     >
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
+
+      <ConfirmDialog
+        visible={confirmDialog.visible}
+        title={
+          confirmDialog.type === "promote" ? "Promote to Admin" : "Delete User"
+        }
+        message={
+          confirmDialog.type === "promote"
+            ? `Are you sure you want to promote "${confirmDialog.userName}" to admin? They will have full access to the admin panel.`
+            : `Are you sure you want to delete "${confirmDialog.userName}"? This action cannot be undone.`
+        }
+        confirmText={
+          confirmDialog.type === "promote" ? "Promote" : "Delete User"
+        }
+        confirmColor={confirmDialog.type === "delete" ? "danger" : "primary"}
+        icon={confirmDialog.type === "promote" ? "arrow-up-circle" : "trash"}
+        onConfirm={handleConfirmAction}
+        onCancel={handleCancelAction}
+      />
+
       <View className="flex-1 bg-gray-50">
         {/* Header */}
         <View className="px-4 pt-4 pb-2">

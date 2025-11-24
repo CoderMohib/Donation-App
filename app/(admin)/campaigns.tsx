@@ -180,20 +180,20 @@ export default function AdminCampaignsScreen() {
       {/* Edit Button */}
       <TouchableOpacity
         onPress={() => handleEditCampaign(campaign.id)}
-        className="bg-blue-500 rounded-lg py-2 px-3 flex-row items-center justify-center"
+        className="bg-blue-500 rounded-full py-2 px-3 flex-row items-center justify-center"
       >
         <Ionicons name="pencil" size={16} color="white" />
-        <Text className="text-white font-semibold ml-2">Edit</Text>
+        <Text className="text-white font-semibold ml-1">Edit</Text>
       </TouchableOpacity>
 
       {/* Start Button (only for drafts) */}
       {campaign.status === "draft" && (
         <TouchableOpacity
           onPress={() => handleStartCampaign(campaign.id, campaign.title)}
-          className="bg-green-500 rounded-lg py-2 px-3 flex-row items-center justify-center"
+          className="bg-green-500 rounded-full py-2 px-3 flex-row items-center justify-center"
         >
           <Ionicons name="play" size={16} color="white" />
-          <Text className="text-white font-semibold ml-2">Start</Text>
+          <Text className="text-white font-semibold ml-1">Start</Text>
         </TouchableOpacity>
       )}
 
@@ -201,20 +201,20 @@ export default function AdminCampaignsScreen() {
       {campaign.status === "in_progress" && (
         <TouchableOpacity
           onPress={() => handleEndCampaign(campaign.id, campaign.title)}
-          className="bg-orange-500 rounded-lg py-2 px-3 flex-row items-center justify-center"
+          className="bg-orange-500 rounded-full py-2 px-3 flex-row items-center justify-center"
         >
           <Ionicons name="stop" size={16} color="white" />
-          <Text className="text-white font-semibold ml-2">End</Text>
+          <Text className="text-white font-semibold ml-1">End</Text>
         </TouchableOpacity>
       )}
 
       {/* Delete Button */}
       <TouchableOpacity
         onPress={() => handleDeleteCampaign(campaign.id, campaign.title)}
-        className="bg-red-500 rounded-lg py-2 px-3 flex-row items-center justify-center"
+        className="bg-red-500 rounded-full py-2 px-3 flex-row items-center justify-center"
       >
         <Ionicons name="trash" size={16} color="white" />
-        <Text className="text-white font-semibold ml-2">Delete</Text>
+        <Text className="text-white font-semibold ml-1">Delete</Text>
       </TouchableOpacity>
 
       {/* Owner Info */}

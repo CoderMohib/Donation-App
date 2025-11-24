@@ -113,12 +113,32 @@ export const updateCampaign = async (
 };
 
 /**
- * Delete a campaign
+ * Delete a campaign and update owner's statistics
  */
 export const deleteCampaign = async (campaignId: string): Promise<void> => {
     ensureFirebaseReady();
     if (!db) throw new Error('Firebase is not initialized');
+
+    // Get the campaign first to find the owner
+    const campaignDoc = await getDoc(doc(db, 'campaigns', campaignId));
+    
+    if (!campaignDoc.exists()) {
+        throw new Error('Campaign not found');
+    }
+
+    const campaign = campaignDoc.data() as Campaign;
+    
+    // Delete the campaign
     await deleteDoc(doc(db, 'campaigns', campaignId));
+
+    // Decrement the owner's totalCampaigns count
+    if (campaign.ownerId) {
+        const userRef = doc(db, 'users', campaign.ownerId);
+        await updateDoc(userRef, {
+            totalCampaigns: increment(-1),
+            updatedAt: Date.now(),
+        });
+    }
 };
 
 // ==================== CAMPAIGN LIFECYCLE ====================
