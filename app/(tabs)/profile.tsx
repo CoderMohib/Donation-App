@@ -1,13 +1,15 @@
-import { PrimaryButton } from "@/src/components/buttons";
-import { CampaignCard } from "@/src/components/cards";
 import { ConfirmDialog, Toast } from "@/src/components/feedback";
 import { DashboardLayout } from "@/src/components/layouts";
+import {
+  ProfileHeader,
+  QuickActions,
+  UserCampaignsSection,
+} from "@/src/components/profile";
 import { getCurrentUser, getUserDonations, logOut } from "@/src/firebase";
 import { useCampaigns, useToast } from "@/src/hooks";
 import { Donation, User } from "@/src/types";
-import { asyncHandler, formatCurrency } from "@/src/utils";
+import { asyncHandler } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -116,12 +118,13 @@ export default function ProfileScreen() {
     return (
       <DashboardLayout title="Profile">
         <View className="items-center justify-center py-20">
-          <Text className="text-gray-500">Please log in</Text>
-          <PrimaryButton
-            title="Login"
+          <Text className="text-gray-500 mb-4">Please log in</Text>
+          <TouchableOpacity
             onPress={() => router.push("/login")}
-            size="medium"
-          />
+            className="bg-primary-500 px-6 py-3 rounded-full"
+          >
+            <Text className="text-white font-semibold">Login</Text>
+          </TouchableOpacity>
         </View>
       </DashboardLayout>
     );
@@ -182,194 +185,35 @@ export default function ProfileScreen() {
       >
         <View className="px-4 py-5">
           {/* Profile Header */}
-          <View className="bg-white rounded-2xl p-6 shadow-lg mb-6">
-            {/* Settings Icon */}
-            <TouchableOpacity
-              onPress={() => router.push("/settings")}
-              className="absolute top-4 right-4 w-10 h-10 bg-gray-100 rounded-full items-center justify-center z-10"
-              activeOpacity={0.7}
-            >
-              <Ionicons name="settings-outline" size={20} color="#6B7280" />
-            </TouchableOpacity>
-
-            <View className="items-center mb-4">
-              {/* Profile Image */}
-              <LinearGradient
-                colors={["#67c3d7", "#ff9580"]} // cyan to coral gradient
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{
-                  width: 86,
-                  height: 86,
-                  borderRadius: 48,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: 16,
-                }}
-              >
-                {user?.photoURL ? (
-                  <Image
-                    source={{ uri: user.photoURL }}
-                    className="w-24 h-24 rounded-full"
-                  />
-                ) : (
-                  <Text className="text-white text-4xl font-bold">
-                    {user.name.charAt(0).toUpperCase()}
-                  </Text>
-                )}
-              </LinearGradient>
-
-              {/* User Info */}
-              <Text className="text-2xl font-bold text-gray-900 mb-1">
-                {user.name}
-              </Text>
-              <Text className="text-gray-500 mb-4">{user.email}</Text>
-
-              {/* Bio */}
-              {(user as any).bio && (
-                <Text className="text-gray-600 text-center text-sm mb-4 px-4">
-                  {(user as any).bio}
-                </Text>
-              )}
-
-              {/* Role Badge */}
-              {user.role === "admin" && (
-                <View className="bg-purple-100 px-4 py-1 rounded-full">
-                  <Text className="text-purple-700 font-semibold text-sm">
-                    Admin
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Stats */}
-            <View className="flex-row justify-around pt-4 border-t border-gray-100">
-              <View className="items-center">
-                <Text className="text-2xl font-bold text-primary-500">
-                  {user.donationCount || 0}
-                </Text>
-                <Text className="text-gray-500 text-sm">Donations</Text>
-              </View>
-              <View className="w-px h-12 bg-gray-200" />
-              <View className="items-center">
-                <Text className="text-2xl font-bold text-green-600">
-                  {formatCurrency(user.totalDonated || 0)}
-                </Text>
-                <Text className="text-gray-500 text-sm">Total Given</Text>
-              </View>
-              <View className="w-px h-12 bg-gray-200" />
-              <View className="items-center">
-                <Text className="text-2xl font-bold text-secondary-600">
-                  {user.totalCampaigns || 0}
-                </Text>
-                <Text className="text-gray-500 text-sm">Campaigns</Text>
-              </View>
-            </View>
-          </View>
+          <ProfileHeader
+            user={user}
+            onSettingsPress={() => router.push("/settings")}
+          />
 
           {/* Quick Actions */}
-          <View className="mb-4">
-            <Text className="text-xl font-bold text-gray-900 mb-3">
-              Quick Actions
-            </Text>
-            <View className="gap-3">
-              {/* My Campaigns Button */}
-              <TouchableOpacity
-                onPress={() => router.push("/(tabs)/my-campaigns")}
-                className="bg-white rounded-2xl p-4 shadow-lg flex-row items-center justify-between"
-              >
-                <View className="flex-row items-center">
-                  <View className="bg-primary-100 w-12 h-12 rounded-full items-center justify-center mr-4">
-                    <Ionicons name="heart" size={24} color="#ff7a5e" />
-                  </View>
-                  <View>
-                    <Text className="text-gray-900 font-bold text-base">
-                      My Campaigns
-                    </Text>
-                    <Text className="text-gray-500 text-sm">
-                      Manage your campaigns
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
-              </TouchableOpacity>
-
-              {/* My Donations Button */}
-              <TouchableOpacity
-                onPress={() => router.push("/(tabs)/my-donations")}
-                className="bg-white rounded-2xl p-4 shadow-lg flex-row items-center justify-between"
-              >
-                <View className="flex-row items-center">
-                  <View className="bg-secondary-100 w-12 h-12 rounded-full items-center justify-center mr-4">
-                    <Ionicons name="list" size={24} color="#4894a8" />
-                  </View>
-                  <View>
-                    <Text className="text-gray-900 font-bold text-base">
-                      My Donations
-                    </Text>
-                    <Text className="text-gray-500 text-sm">
-                      View donation history
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
-              </TouchableOpacity>
-            </View>
-          </View>
+          <QuickActions
+            userRole="user"
+            onActionPress={(action) => {
+              if (action === "my-campaigns") {
+                router.push("/(tabs)/my-campaigns");
+              } else if (action === "my-donations") {
+                router.push("/(tabs)/my-donations");
+              }
+            }}
+          />
 
           {/* User Campaigns */}
-          {campaigns.length > 0 && (
-            <View className="mb-1">
-              <Text className="text-xl font-bold text-gray-900 mb-2">
-                Your Campaigns
-              </Text>
-              {campaigns.map((campaign) => (
-                <View key={campaign.id} className="mb-2">
-                  <CampaignCard
-                    campaign={campaign}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/campaign/[id]",
-                        params: { id: campaign.id },
-                      })
-                    }
-                  />
-                </View>
-              ))}
-              {user.totalCampaigns > 3 && (
-                <TouchableOpacity
-                  onPress={() => router.push("/(tabs)/my-campaigns")}
-                  className="bg-secondary-100 rounded-xl p-4 flex-row items-center justify-center mt-2"
-                >
-                  <Text className="text-secondary-600 font-semibold mr-2">
-                    View All {user.totalCampaigns} Campaigns
-                  </Text>
-                  <Ionicons name="arrow-forward" size={18} color="#4894a8" />
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-
-          {/* Empty State - Only show if user truly has no donations */}
-          {(!user.donationCount || user.donationCount === 0) && (
-            <View className="items-center justify-center mb-2">
-              <Ionicons name="heart-outline" size={64} color="#D1D5DB" />
-              <Text className="text-gray-500 text-center">
-                {`You haven't made any donations yet`}
-              </Text>
-              <View className="mt-2">
-                <PrimaryButton
-                  title="Browse Campaigns"
-                  onPress={() =>
-                    router.push(
-                      user.role === "admin" ? "/(admin)/campaigns" : "/(tabs)"
-                    )
-                  }
-                  size="medium"
-                />
-              </View>
-            </View>
-          )}
+          <UserCampaignsSection
+            campaigns={campaigns}
+            totalCampaigns={user.totalCampaigns || 0}
+            onCampaignPress={(campaignId) =>
+              router.push({
+                pathname: "/campaign/[id]",
+                params: { id: campaignId },
+              })
+            }
+            onViewAllPress={() => router.push("/(tabs)/my-campaigns")}
+          />
         </View>
       </ScrollView>
     </DashboardLayout>
