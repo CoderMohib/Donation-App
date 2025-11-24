@@ -419,7 +419,7 @@ export default function SettingsScreen() {
 
           {/* Role Badge (if admin) */}
           {user.role === "admin" && (
-            <View className="bg-purple-50 rounded-xl p-3 mb-4 flex-row items-center">
+            <View className="bg-purple-50 rounded-xl px-2 mb-1 flex-row items-center">
               <View className="bg-purple-100 w-10 h-10 rounded-full items-center justify-center mr-3">
                 <Ionicons name="shield-checkmark" size={20} color="#7C3AED" />
               </View>
@@ -436,7 +436,7 @@ export default function SettingsScreen() {
 
           {/* Action Buttons */}
           {isEditing && (
-            <View className="flex-row gap-3 mt-2">
+            <View className="flex-row gap-3 mt-1">
               {/* Cancel Button */}
               <TouchableOpacity
                 onPress={handleCancel}

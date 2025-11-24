@@ -346,7 +346,7 @@ export default function AdminCampaignsScreen() {
 
       <View className=" bg-gray-50">
         {/* Search Bar */}
-        <View className="px-4 pt-2 mb-2">
+        <View className="px-4 pt-2 mb-3">
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -356,7 +356,7 @@ export default function AdminCampaignsScreen() {
         </View>
 
         {/* Filter Tabs */}
-        <View className="mb-2">
+        <View className="mb-3">
           <FilterTabs
             tabs={STATUS_FILTERS}
             activeTab={selectedStatus}
@@ -378,7 +378,7 @@ export default function AdminCampaignsScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={{
               paddingHorizontal: 16,
-              paddingBottom: 100,
+              paddingBottom: 110,
             }}
             ListEmptyComponent={renderEmptyState()}
             ListFooterComponent={renderFooter}
