@@ -82,7 +82,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {/* Confirm Button */}
             <TouchableOpacity
               onPress={onConfirm}
-              className={`${getConfirmButtonClass()} rounded-full py-2 px-10`}
+              className={`${getConfirmButtonClass()} rounded-full py-2 px-10 border-2 border-primary-700`}
               style={{
                 shadowColor: getIconColor(),
                 shadowOffset: { width: 0, height: 4 },

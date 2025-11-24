@@ -1,4 +1,5 @@
 import { CampaignCard } from "@/src/components/cards";
+import { ConfirmDialog, Toast } from "@/src/components/feedback";
 import { SearchBar } from "@/src/components/inputs";
 import { DashboardLayout } from "@/src/components/layouts";
 import { FilterTabs } from "@/src/components/navigation";
@@ -8,7 +9,7 @@ import {
   endCampaign,
   startCampaign,
 } from "@/src/firebase/firestore";
-import { useAuth, useCampaigns } from "@/src/hooks";
+import { useAuth, useCampaigns, useToast } from "@/src/hooks";
 import { Campaign } from "@/src/types";
 import { asyncHandler } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,7 +17,6 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Text,
   TouchableOpacity,
@@ -34,9 +34,16 @@ const STATUS_FILTERS = [
 export default function AdminCampaignsScreen() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
+  const { toast, showSuccess, showError, hideToast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [displayLimit, setDisplayLimit] = useState(10);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    visible: boolean;
+    type: "start" | "end" | "delete" | null;
+    campaignId: string;
+    campaignTitle: string;
+  }>({ visible: false, type: null, campaignId: "", campaignTitle: "" });
 
   // Fetch all campaigns (no ownerId filter for admin)
   const { campaigns, loading, error } = useCampaigns({
@@ -83,70 +90,73 @@ export default function AdminCampaignsScreen() {
     setDisplayLimit((prev) => prev + 10);
   };
 
-  const handleStartCampaign = async (campaignId: string, title: string) => {
-    Alert.alert(
-      "Start Campaign",
-      `Are you sure you want to start "${title}"?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Start",
-          style: "default",
-          onPress: async () => {
-            const [, error] = await asyncHandler(startCampaign(campaignId));
-            if (error) {
-              Alert.alert("Error", error.message);
-            } else {
-              Alert.alert("Success", "Campaign started successfully!");
-            }
-          },
-        },
-      ]
-    );
+  const handleStartCampaign = (campaignId: string, title: string) => {
+    setConfirmDialog({
+      visible: true,
+      type: "start",
+      campaignId,
+      campaignTitle: title,
+    });
   };
 
-  const handleEndCampaign = async (campaignId: string, title: string) => {
-    Alert.alert(
-      "End Campaign",
-      `Are you sure you want to end "${title}"? This will prevent further donations.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "End",
-          style: "destructive",
-          onPress: async () => {
-            const [, error] = await asyncHandler(endCampaign(campaignId));
-            if (error) {
-              Alert.alert("Error", error.message);
-            } else {
-              Alert.alert("Success", "Campaign ended successfully!");
-            }
-          },
-        },
-      ]
-    );
+  const handleEndCampaign = (campaignId: string, title: string) => {
+    setConfirmDialog({
+      visible: true,
+      type: "end",
+      campaignId,
+      campaignTitle: title,
+    });
   };
 
-  const handleDeleteCampaign = async (campaignId: string, title: string) => {
-    Alert.alert(
-      "Delete Campaign",
-      `Are you sure you want to delete "${title}"? This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            const [, error] = await asyncHandler(deleteCampaign(campaignId));
-            if (error) {
-              Alert.alert("Error", error.message);
-            } else {
-              Alert.alert("Success", "Campaign deleted successfully!");
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteCampaign = (campaignId: string, title: string) => {
+    setConfirmDialog({
+      visible: true,
+      type: "delete",
+      campaignId,
+      campaignTitle: title,
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    const { type, campaignId } = confirmDialog;
+    setConfirmDialog({
+      visible: false,
+      type: null,
+      campaignId: "",
+      campaignTitle: "",
+    });
+
+    if (type === "start") {
+      const [, error] = await asyncHandler(startCampaign(campaignId));
+      if (error) {
+        showError(error.message || "Failed to start campaign");
+      } else {
+        showSuccess("Campaign started successfully!");
+      }
+    } else if (type === "end") {
+      const [, error] = await asyncHandler(endCampaign(campaignId));
+      if (error) {
+        showError(error.message || "Failed to end campaign");
+      } else {
+        showSuccess("Campaign ended successfully!");
+      }
+    } else if (type === "delete") {
+      const [, error] = await asyncHandler(deleteCampaign(campaignId));
+      if (error) {
+        showError(error.message || "Failed to delete campaign");
+      } else {
+        showSuccess("Campaign deleted successfully!");
+      }
+    }
+  };
+
+  const handleCancelAction = () => {
+    setConfirmDialog({
+      visible: false,
+      type: null,
+      campaignId: "",
+      campaignTitle: "",
+    });
   };
 
   const handleEditCampaign = (campaignId: string) => {
@@ -283,9 +293,51 @@ export default function AdminCampaignsScreen() {
       showBackButton={false}
       scrollable={false}
     >
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
+
+      <ConfirmDialog
+        visible={confirmDialog.visible}
+        title={
+          confirmDialog.type === "start"
+            ? "Start Campaign"
+            : confirmDialog.type === "end"
+              ? "End Campaign"
+              : "Delete Campaign"
+        }
+        message={
+          confirmDialog.type === "start"
+            ? `Are you sure you want to start "${confirmDialog.campaignTitle}"? Once started, it will be visible to all users.`
+            : confirmDialog.type === "end"
+              ? `Are you sure you want to end "${confirmDialog.campaignTitle}"? This will prevent further donations.`
+              : `Are you sure you want to delete "${confirmDialog.campaignTitle}"? This action cannot be undone.`
+        }
+        confirmText={
+          confirmDialog.type === "start"
+            ? "Start Campaign"
+            : confirmDialog.type === "end"
+              ? "End Campaign"
+              : "Delete Campaign"
+        }
+        confirmColor={confirmDialog.type === "delete" ? "danger" : "primary"}
+        icon={
+          confirmDialog.type === "start"
+            ? "rocket"
+            : confirmDialog.type === "end"
+              ? "stop-circle"
+              : "trash"
+        }
+        onConfirm={handleConfirmAction}
+        onCancel={handleCancelAction}
+      />
+
       <View className=" bg-gray-50">
         {/* Search Bar */}
-        <View className="px-4 pt-1">
+        <View className="px-4 pt-2 mb-2">
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -295,7 +347,7 @@ export default function AdminCampaignsScreen() {
         </View>
 
         {/* Filter Tabs */}
-        <View className="px-2">
+        <View className="px-2 mb-2">
           <FilterTabs
             tabs={STATUS_FILTERS}
             activeTab={selectedStatus}
