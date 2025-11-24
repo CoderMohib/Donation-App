@@ -208,7 +208,27 @@ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
 EXPO_PUBLIC_FIREBASE_APP_ID=your-app-id
 ```
 
-### 3. Run the App
+### 3. Setup Cloudinary (Image Uploads)
+1. Create a free account at [cloudinary.com](https://cloudinary.com)
+2. Go to Dashboard → Settings → Upload
+3. Create an **Upload Preset**:
+   - Name: `donation-app-uploads` (or your choice)
+   - Signing mode: **Unsigned** (for client-side uploads)
+   - Folder: `donation-app` (optional, for organization)
+4. Copy your **Cloud Name** from the dashboard
+5. Add to `.env`:
+
+```env
+EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
+EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=donation-app-uploads
+```
+
+**Note**: Cloudinary is used for:
+- Campaign image uploads (stored in `donation-app/campaigns/{campaignId}/`)
+- Profile picture uploads (stored in `donation-app/profiles/{userId}/`)
+- Automatic image optimization and CDN delivery
+
+### 4. Run the App
 ```bash
 npm start
 # Press 'a' for Android, 'i' for iOS, 'w' for Web
@@ -299,10 +319,13 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
   - `notifications` - User notifications
 
 #### Storage
-- **Firebase Storage** - Image uploads
-- Campaign images
-- Profile pictures
-- Image optimization
+- **Cloudinary** - Image upload and CDN service
+  - Campaign image uploads
+  - Profile picture uploads
+  - Automatic image optimization
+  - CDN delivery for fast loading
+  - Folder organization (`donation-app/campaigns/`, `donation-app/profiles/`)
+- **Firebase Storage** - Alternative storage option (optional)
 
 ### Styling
 - **NativeWind** - Tailwind CSS for React Native
@@ -389,6 +412,141 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
   createdAt: number;             // Creation timestamp
 }
 ```
+
+## 🔒 Firestore Security Rules
+
+The application uses comprehensive security rules to protect data and ensure proper access control. Copy these rules to your Firestore Database → Rules section:
+
+```javascript
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(userId);
+      // Users can update their own profile OR admins can update any user
+      allow update: if isOwner(userId) || isAdmin();
+      // Users can delete their own account OR admins can delete any user (except themselves)
+      allow delete: if (isOwner(userId) || isAdmin()) && request.auth.uid != userId;
+    }
+    
+    // Campaigns collection
+    match /campaigns/{campaignId} {
+      allow read: if true; // Anyone can read campaigns
+      allow create: if isAuthenticated();
+      // Campaign owner or admin can update
+      allow update: if isAuthenticated() && 
+                      (isOwner(resource.data.ownerId) || isAdmin());
+      // Campaign owner or admin can delete
+      allow delete: if isAuthenticated() && 
+                      (isOwner(resource.data.ownerId) || isAdmin());
+    }
+    
+    // Donations collection
+    match /donations/{donationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      // Admins can update/delete donations
+      allow update, delete: if isAdmin();
+    }
+  }
+}
+```
+
+**Key Security Features**:
+- ✅ Authentication required for most operations
+- ✅ Users can only modify their own data
+- ✅ Admins have elevated permissions
+- ✅ Campaigns are publicly readable but only editable by owners/admins
+- ✅ Donations are immutable (only admins can modify/delete)
+
+## 📊 Firestore Indexes
+
+The following composite indexes are required for optimal query performance. These indexes are automatically created by Firestore when you run queries, but you can also create them manually in the Firebase Console:
+
+### Required Indexes
+
+#### 1. Donations Collection
+**Index ID**: `CICAgJim14AK`
+- **Collection**: `donations`
+- **Fields Indexed**:
+  - `campaignId` (Ascending)
+  - `donatedAt` (Descending)
+  - `__name__` (Descending)
+- **Query Scope**: Collection
+- **Status**: Enabled
+- **Used For**: Querying donations by campaign with date sorting
+
+#### 2. Campaigns Collection - Status Filter
+**Index ID**: `CICAgOjXh4EK`
+- **Collection**: `campaigns`
+- **Fields Indexed**:
+  - `status` (Ascending)
+  - `createdAt` (Descending)
+  - `__name__` (Descending)
+- **Query Scope**: Collection
+- **Status**: Enabled
+- **Used For**: Filtering campaigns by status (e.g., active campaigns)
+
+#### 3. Campaigns Collection - Owner Filter
+**Index ID**: `CICAgJiUpoMK`
+- **Collection**: `campaigns`
+- **Fields Indexed**:
+  - `ownerId` (Ascending)
+  - `createdAt` (Descending)
+  - `__name__` (Descending)
+- **Query Scope**: Collection
+- **Status**: Enabled
+- **Used For**: Querying user's own campaigns
+
+#### 4. Donations Collection - Donor Filter
+**Index ID**: `CICAgJiUsZIK`
+- **Collection**: `donations`
+- **Fields Indexed**:
+  - `donorId` (Ascending)
+  - `donatedAt` (Descending)
+  - `__name__` (Descending)
+- **Query Scope**: Collection
+- **Status**: Enabled
+- **Used For**: Querying user's donation history
+
+### How to Create Indexes
+
+1. **Automatic Creation**: Firestore will prompt you to create indexes when you run queries that require them. Click the link in the error message to create them automatically.
+
+2. **Manual Creation**:
+   - Go to Firebase Console → Firestore Database → Indexes
+   - Click "Add index"
+   - Select the collection
+   - Add fields in the correct order
+   - Set sort order (Ascending/Descending)
+   - Click "Create"
+
+3. **Using Firebase CLI**:
+   ```bash
+   firebase deploy --only firestore:indexes
+   ```
+
+**Note**: Indexes may take a few minutes to build. Queries will fail until indexes are ready.
 
 ## 📦 Component Architecture
 
@@ -569,8 +727,10 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 - `asyncHandler<T>(promise: Promise<T>)` - Async error handling wrapper
 
 ### Image Helpers
-- Image upload utilities
-- Image optimization functions
+- `getCloudinaryUrl(publicId, cloudName, options?)` - Generate Cloudinary URL with transformations
+  - Supports width, height, crop, quality, and format options
+  - Example: `getCloudinaryUrl('image-id', 'cloud-name', { width: 400, quality: 'auto' })`
+- `getReadableFileSize(bytes: number)` - Convert bytes to human-readable format
 
 ## 👨‍💼 Admin Features
 
@@ -651,9 +811,42 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 - `updateUserCampaignStats(userId, incrementBy)` - Update campaign stats
 
 ### Storage (src/firebase/storage.ts)
-- Image upload functions
-- Profile picture upload
-- Campaign image upload
+
+#### Cloudinary Image Upload
+The app uses **Cloudinary** for image uploads and CDN delivery. All image uploads are handled client-side using unsigned upload presets.
+
+**Functions**:
+- `uploadImage(uri: string, folder: string)` - Generic image upload function
+  - Uploads image to Cloudinary
+  - Returns secure URL for the uploaded image
+  - Handles errors and network issues
+  
+- `uploadProfilePicture(userId: string, imageUri: string)` - Upload user profile picture
+  - Stores in: `donation-app/profiles/{userId}/`
+  - Returns secure URL for profile image
+  
+- `uploadCampaignImage(campaignId: string, imageUri: string)` - Upload campaign image
+  - Stores in: `donation-app/campaigns/{campaignId}/`
+  - Returns secure URL for campaign image
+
+**Configuration**:
+- Requires `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME` in `.env`
+- Requires `EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET` in `.env`
+- Upload preset must be set to **Unsigned** mode
+
+**Image Helpers** (src/utils/imageHelpers.ts):
+- `getCloudinaryUrl(publicId, cloudName, options?)` - Generate Cloudinary URL with transformations
+  - Supports width, height, crop, quality, and format options
+  - Useful for responsive images and optimization
+
+**Usage Example**:
+```typescript
+import { uploadCampaignImage } from '@/src/firebase/storage';
+
+// Upload campaign image
+const imageUrl = await uploadCampaignImage(campaignId, imageUri);
+// Returns: https://res.cloudinary.com/{cloudName}/image/upload/v{version}/donation-app/campaigns/{campaignId}/{filename}
+```
 
 ## 🎯 Features Checklist
 
