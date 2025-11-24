@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "donationapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -20,7 +20,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.DonationApp",
+      "package": "com.sheikmobii.donationapp",
+      "versionCode": 2,
       "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
@@ -43,8 +44,13 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fe46af40-b58b-432d-a653-bf937a2d3d96"
+      }
     }
   }
 }

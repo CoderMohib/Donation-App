@@ -24,7 +24,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
     >
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <ImageBackground
-        source={require('../../../assets/auth_background.png')}
+        source={require('../../../assets/auth_background.jpg')}
         className="flex-1"
         resizeMode="cover"
       >
