@@ -165,7 +165,13 @@ export default function CampaignScreen() {
 
           {/* Donate Button */}
           <PrimaryButton
-            title="Donate Now"
+            title={
+              campaign.status === "ended"
+                ? "Campaign Ended"
+                : campaign.status === "completed"
+                ? "Campaign Completed"
+                : "Donate Now"
+            }
             onPress={() =>
               router.push({
                 pathname: "/donate/[campaignId]",
@@ -174,6 +180,9 @@ export default function CampaignScreen() {
             }
             variant="success"
             size="large"
+            disabled={
+              campaign.status === "ended" || campaign.status === "completed"
+            }
           />
 
           {/* Recent Donations */}

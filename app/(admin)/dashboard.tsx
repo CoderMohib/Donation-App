@@ -1,3 +1,4 @@
+import { ProfileDropdown } from "@/src/components";
 import { DashboardLayout } from "@/src/components/layouts";
 import { db } from "@/src/firebase/firebase";
 import { useAuth } from "@/src/hooks";
@@ -202,6 +203,7 @@ export default function AdminDashboardScreen() {
       title="Admin Dashboard"
       showBackButton={false}
       scrollable={false}
+      rightAction={<ProfileDropdown/>}
     >
       <ScrollView
         className="flex-1 bg-gray-50"

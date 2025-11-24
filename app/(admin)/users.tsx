@@ -217,7 +217,9 @@ export default function AdminUsersScreen() {
       if (error) {
         showError(error.message || "Failed to delete user");
       } else {
-        showSuccess(`${userName} has been deleted successfully!`);
+        showSuccess(
+          `${userName}'s data deleted. Note: Auth account still exists - delete manually from Firebase Console to reuse email.`
+        );
         loadUsers(); // Reload users
       }
     }
@@ -386,7 +388,7 @@ export default function AdminUsersScreen() {
         message={
           confirmDialog.type === "promote"
             ? `Are you sure you want to promote "${confirmDialog.userName}" to admin? They will have full access to the admin panel.`
-            : `Are you sure you want to delete "${confirmDialog.userName}"? This action cannot be undone.`
+            : `Are you sure you want to delete "${confirmDialog.userName}"? This will remove their Firestore data but NOT their Firebase Auth account. To reuse this email, you must manually delete the auth account from Firebase Console.`
         }
         confirmText={
           confirmDialog.type === "promote" ? "Promote" : "Delete User"
