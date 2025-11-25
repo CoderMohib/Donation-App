@@ -5,4 +5,5 @@ export { useDonations } from './useDonations';
 export { useEmailVerification } from './useEmailVerification';
 export { useNotifications } from './useNotifications';
 export { useToast } from './useToast';
+export { useUserNotifications } from './useUserNotifications';
 

@@ -332,6 +332,13 @@ export const createDonation = async (
     const campaignRef = doc(db, 'campaigns', donationData.campaignId);
     const userRef = doc(db, 'users', donationData.donorId);
 
+    // Fetch campaign data before transaction so it's available for notifications
+    const campaignDoc = await getDoc(campaignRef);
+    if (!campaignDoc.exists()) {
+        throw new Error('Campaign not found');
+    }
+    const campaign = campaignDoc.data() as Campaign;
+
     try {
         // Use transaction to ensure atomic update
         await runTransaction(db, async (transaction) => {
@@ -342,11 +349,11 @@ export const createDonation = async (
                 throw new Error('Campaign not found');
             }
 
-            const campaign = campaignDoc.data() as Campaign;
+            const campaignInTransaction = campaignDoc.data() as Campaign;
 
             // Validate campaign status
-            if (campaign.status !== 'in_progress') {
-                throw new Error(`Campaign is ${campaign.status}. Only active campaigns can receive donations.`);
+            if (campaignInTransaction.status !== 'in_progress') {
+                throw new Error(`Campaign is ${campaignInTransaction.status}. Only active campaigns can receive donations.`);
             }
 
             console.log('Creating donation:', {
@@ -375,21 +382,21 @@ export const createDonation = async (
             transaction.set(donationRef, donation);
 
             // Update campaign's donated amount
-            const newDonatedAmount = campaign.donatedAmount + donationData.amount;
+            const newDonatedAmount = campaignInTransaction.donatedAmount + donationData.amount;
             transaction.update(campaignRef, {
                 donatedAmount: newDonatedAmount,
                 updatedAt: Date.now(),
             });
 
             console.log('Updated campaign donated amount:', {
-                campaignId: campaign.id,
-                previousAmount: campaign.donatedAmount,
+                campaignId: campaignInTransaction.id,
+                previousAmount: campaignInTransaction.donatedAmount,
                 newAmount: newDonatedAmount,
-                targetAmount: campaign.targetAmount,
+                targetAmount: campaignInTransaction.targetAmount,
             });
 
             // Auto-complete if goal reached
-            if (newDonatedAmount >= campaign.targetAmount && campaign.status === 'in_progress') {
+            if (newDonatedAmount >= campaignInTransaction.targetAmount && campaignInTransaction.status === 'in_progress') {
                 transaction.update(campaignRef, {
                     status: 'completed',
                 });
@@ -418,6 +425,52 @@ export const createDonation = async (
         });
 
         console.log('Donation transaction successful:', donationRef.id);
+        
+        // Send notifications after successful transaction
+        try {
+            const { createNotification } = await import('../services/notificationService');
+            
+            // 1. Send donation notification to campaign owner
+            if (campaign.ownerId) {
+                await createNotification(
+                    campaign.ownerId,
+                    'donation',
+                    'New Donation Received!',
+                    `${donationData.donorName} donated $${donationData.amount} to your campaign "${campaign.title}"`,
+                    {
+                        campaignId: donationData.campaignId,
+                        donationId: donationRef.id,
+                    }
+                );
+            }
+            
+            // 2. Check for milestone notifications
+            const previousAmount = campaign.donatedAmount;
+            const newAmount = previousAmount + donationData.amount;
+            const targetAmount = campaign.targetAmount;
+            
+            const milestones = [25, 50, 75, 100];
+            for (const milestone of milestones) {
+                const milestoneAmount = (targetAmount * milestone) / 100;
+                
+                // Check if this donation crossed a milestone
+                if (previousAmount < milestoneAmount && newAmount >= milestoneAmount && campaign.ownerId) {
+                    await createNotification(
+                        campaign.ownerId,
+                        'milestone',
+                        `Milestone Reached! 🎉`,
+                        `Your campaign "${campaign.title}" has reached ${milestone}% of its goal!`,
+                        {
+                            campaignId: donationData.campaignId,
+                        }
+                    );
+                }
+            }
+        } catch (notificationError) {
+            // Don't fail the donation if notification fails
+            console.error('Failed to send notification:', notificationError);
+        }
+        
         return donationRef.id;
     } catch (error: any) {
         console.error('Donation transaction failed:', error);
