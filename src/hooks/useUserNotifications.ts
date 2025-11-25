@@ -26,16 +26,26 @@ export function useUserNotifications(userId: string | undefined) {
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notifs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as AppNotification[];
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const notifs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as AppNotification[];
 
-      setNotifications(notifs);
-      setUnreadCount(notifs.filter((n) => !n.read).length);
-      setLoading(false);
-    });
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter((n) => !n.read).length);
+        setLoading(false);
+      },
+      (error) => {
+        // Handle permission errors gracefully
+        console.log('Notification listener error:', error.message);
+        setNotifications([]);
+        setUnreadCount(0);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [userId]);

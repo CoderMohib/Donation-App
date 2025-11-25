@@ -27,9 +27,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Header */}
       {title && (
         <View className="bg-white px-4 py-4 shadow-sm border-b border-gray-100">
-          <View className="flex-row items-center justify-between">
+          <View className="flex-row justify-between items-center">
             {/* Left Side - Custom Action, Back Button, or Spacer */}
-            <View className="w-10">
+            <View>
               {leftAction ? (
                 leftAction
               ) : showBackButton && onBackPress ? (
@@ -44,12 +44,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </View>
 
             {/* Center - Title */}
-            <Text className="text-xl font-bold text-gray-900 flex-1 text-center">
+            <Text className="text-xl font-bold text-gray-900 flex-1 text-center ml-4">
               {title}
             </Text>
 
             {/* Right Side - Action or Spacer */}
-            <View className="w-10">{rightAction}</View>
+            <View>{rightAction}</View>
           </View>
         </View>
       )}

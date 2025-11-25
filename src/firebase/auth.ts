@@ -46,6 +46,20 @@ export const signUp = async (
 
     await setDoc(doc(db, 'users', firebaseUser.uid), userData);
 
+    // Send welcome notification
+    try {
+        const { createNotification } = await import('../services/notificationService');
+        await createNotification(
+            firebaseUser.uid,
+            'campaign_update',
+            'Welcome to Donation App! 👋',
+            'Thank you for joining our community. Start exploring campaigns and make a difference today!',
+            {}
+        );
+    } catch (error) {
+        console.error('Failed to send welcome notification:', error);
+    }
+
     return userData;
 };
 

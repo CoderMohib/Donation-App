@@ -150,11 +150,33 @@ export const startCampaign = async (campaignId: string): Promise<void> => {
     ensureFirebaseReady();
     if (!db) throw new Error('Firebase is not initialized');
 
+    // Get campaign data before updating
+    const campaign = await getCampaign(campaignId);
+    if (!campaign) throw new Error('Campaign not found');
+
     const campaignRef = doc(db, 'campaigns', campaignId);
     await updateDoc(campaignRef, {
         status: 'in_progress',
         updatedAt: Date.now(),
     });
+
+    // Send notification to campaign owner
+    try {
+        const { createNotification } = await import('../services/notificationService');
+        if (campaign.ownerId) {
+            await createNotification(
+                campaign.ownerId,
+                'campaign_update',
+                'Campaign Started! 🚀',
+                `Your campaign "${campaign.title}" is now live and accepting donations!`,
+                {
+                    campaignId: campaign.id,
+                }
+            );
+        }
+    } catch (error) {
+        console.error('Failed to send campaign start notification:', error);
+    }
 };
 
 /**
@@ -164,11 +186,34 @@ export const endCampaign = async (campaignId: string): Promise<void> => {
     ensureFirebaseReady();
     if (!db) throw new Error('Firebase is not initialized');
 
+    // Get campaign data before updating
+    const campaign = await getCampaign(campaignId);
+    if (!campaign) throw new Error('Campaign not found');
+
     const campaignRef = doc(db, 'campaigns', campaignId);
     await updateDoc(campaignRef, {
         status: 'ended',
         updatedAt: Date.now(),
     });
+
+    // Send notification to campaign owner
+    try {
+        const { createNotification } = await import('../services/notificationService');
+        if (campaign.ownerId) {
+            await createNotification(
+                campaign.ownerId,
+                'admin_action',
+                'Campaign Ended',
+                `Your campaign "${campaign.title}" has been ended by an administrator.`,
+                {
+                    campaignId: campaign.id,
+                    action: 'ended',
+                }
+            );
+        }
+    } catch (error) {
+        console.error('Failed to send campaign end notification:', error);
+    }
 };
 
 /**
@@ -187,6 +232,24 @@ export const checkCampaignCompletion = async (campaignId: string): Promise<void>
             status: 'completed',
             updatedAt: Date.now(),
         });
+
+        // Send goal reached notification to campaign owner
+        try {
+            const { createNotification } = await import('../services/notificationService');
+            if (campaign.ownerId) {
+                await createNotification(
+                    campaign.ownerId,
+                    'milestone',
+                    'Goal Reached! 🎯',
+                    `Congratulations! Your campaign "${campaign.title}" has reached its funding goal of $${campaign.targetAmount}!`,
+                    {
+                        campaignId: campaign.id,
+                    }
+                );
+            }
+        } catch (error) {
+            console.error('Failed to send goal reached notification:', error);
+        }
     }
 };
 
@@ -444,7 +507,19 @@ export const createDonation = async (
                 );
             }
             
-            // 2. Check for milestone notifications
+            // 2. Send thank you notification to donor
+            await createNotification(
+                donationData.donorId,
+                'donation',
+                'Thank You for Your Donation! 💚',
+                `Your donation of $${donationData.amount} to \"${campaign.title}\" has been received. You're making a real difference!`,
+                {
+                    campaignId: donationData.campaignId,
+                    donationId: donationRef.id,
+                }
+            );
+            
+            // 3. Check for milestone notifications
             const previousAmount = campaign.donatedAmount;
             const newAmount = previousAmount + donationData.amount;
             const targetAmount = campaign.targetAmount;

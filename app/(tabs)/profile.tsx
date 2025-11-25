@@ -1,5 +1,6 @@
 import { ConfirmDialog, Toast } from "@/src/components/feedback";
 import { DashboardLayout } from "@/src/components/layouts";
+import { NotificationBell } from "@/src/components/notifications/NotificationBell";
 import {
   ProfileHeader,
   QuickActions,
@@ -144,12 +145,15 @@ export default function ProfileScreen() {
         </View>
       }
       rightAction={
-        <TouchableOpacity
-          onPress={handleLogout}
-          className="w-10 h-10 items-center justify-center"
-        >
-          <Ionicons name="log-out-outline" size={24} color="#EF4444" />
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-2">
+          <NotificationBell />
+          <TouchableOpacity
+            onPress={handleLogout}
+            className="w-10 h-10 items-center justify-center"
+          >
+            <Ionicons name="log-out-outline" size={24} color="#EF4444" />
+          </TouchableOpacity>
+        </View>
       }
     >
       <Toast

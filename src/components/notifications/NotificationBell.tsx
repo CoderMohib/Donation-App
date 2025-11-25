@@ -12,7 +12,11 @@ export const NotificationBell: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!user || !db) return;
+    // Don't set up listener if user is not logged in or db is not ready
+    if (!user || !db) {
+      setUnreadCount(0);
+      return;
+    }
 
     const q = query(
       collection(db, "notifications"),
@@ -20,12 +24,25 @@ export const NotificationBell: React.FC = () => {
       where("read", "==", false)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setUnreadCount(snapshot.size);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        setUnreadCount(snapshot.size);
+      },
+      (error) => {
+        // Handle permission errors silently
+        console.log("Notification listener error:", error.message);
+        setUnreadCount(0);
+      }
+    );
 
     return () => unsubscribe();
   }, [user]);
+
+  // Don't show bell if user is not logged in
+  if (!user) {
+    return null;
+  }
 
   return (
     <TouchableOpacity

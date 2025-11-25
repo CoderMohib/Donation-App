@@ -14,6 +14,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { ConfirmDialog } from "../feedback/ConfirmDialog";
 import { Toast } from "../feedback/Toast";
+import { NotificationBell } from "../notifications/NotificationBell";
 
 interface ProfileDropdownProps {
   /**
@@ -104,25 +105,31 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
         onCancel={() => setShowLogoutDialog(false)}
       />
 
-      {/* Profile Icon Button */}
-      <TouchableOpacity
-        onPress={() => setShowDropdown(!showDropdown)}
-        className="w-10 h-10 items-center justify-center"
-      >
-        {user?.photoURL ? (
-          <Image
-            source={{ uri: user.photoURL }}
-            className="w-9 h-9 rounded-full"
-            resizeMode="cover"
-          />
-        ) : (
-          <Ionicons
-            name="person-circle-outline"
-            size={iconSize}
-            color={iconColor}
-          />
-        )}
-      </TouchableOpacity>
+      {/* Header Actions Container */}
+      <View className="flex-row items-center gap-2">
+        {/* Notification Bell */}
+        <NotificationBell />
+
+        {/* Profile Icon Button */}
+        <TouchableOpacity
+          onPress={() => setShowDropdown(!showDropdown)}
+          className="w-10 h-10 items-center justify-center"
+        >
+          {user?.photoURL ? (
+            <Image
+              source={{ uri: user.photoURL }}
+              className="w-9 h-9 rounded-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <Ionicons
+              name="person-circle-outline"
+              size={iconSize}
+              color={iconColor}
+            />
+          )}
+        </TouchableOpacity>
+      </View>
 
       {/* Dropdown Modal */}
       {showDropdown && (

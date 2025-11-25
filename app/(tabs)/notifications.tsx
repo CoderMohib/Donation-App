@@ -185,6 +185,7 @@ export default function NotificationsScreen() {
   return (
     <DashboardLayout
       title="Notifications"
+      scrollable={false}
       rightAction={
         unreadCount > 0 ? (
           <TouchableOpacity onPress={handleMarkAllAsRead} className="px-3 py-2">
