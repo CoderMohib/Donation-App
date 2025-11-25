@@ -13,6 +13,7 @@ export async function createNotification(
   data?: {
     campaignId?: string;
     donationId?: string;
+    updateId?: string;
     action?: string;
   }
 ): Promise<string> {

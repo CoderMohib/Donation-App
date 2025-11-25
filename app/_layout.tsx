@@ -129,6 +129,13 @@ export default function RootLayout() {
             options={{ headerShown: false }}
           />
 
+          {/* Campaign Updates */}
+
+          <Stack.Screen
+            name="campaign/updates"
+            options={{ headerShown: false }}
+          />
+
           {/* Settings Screen */}
           <Stack.Screen name="settings" options={{ headerShown: false }} />
 

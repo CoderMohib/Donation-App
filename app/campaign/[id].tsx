@@ -1,8 +1,14 @@
 import { PrimaryButton } from "@/src/components/buttons";
 import { DonationCard } from "@/src/components/cards";
+import UpdateCard from "@/src/components/cards/UpdateCard";
 import { DashboardLayout } from "@/src/components/layouts";
-import { subscribeToCampaign, subscribeToDonations } from "@/src/firebase";
-import { Campaign, Donation } from "@/src/types";
+import {
+  subscribeToCampaign,
+  subscribeToCampaignUpdates,
+  subscribeToDonations,
+} from "@/src/firebase";
+import { useAuth } from "@/src/hooks/useAuth";
+import { Campaign, CampaignUpdate, Donation } from "@/src/types";
 import {
   calculateDaysRemaining,
   calculateProgress,
@@ -11,13 +17,15 @@ import {
 } from "@/src/utils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, ScrollView, Text, View } from "react-native";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function CampaignScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [updates, setUpdates] = useState<CampaignUpdate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,10 +46,20 @@ export default function CampaignScreen() {
       5
     );
 
+    // Subscribe to real-time campaign updates
+    const unsubscribeUpdates = subscribeToCampaignUpdates(
+      id,
+      (updatesData) => {
+        setUpdates(updatesData);
+      },
+      3
+    );
+
     // Cleanup subscriptions on unmount
     return () => {
       unsubscribeCampaign();
       unsubscribeDonations();
+      unsubscribeUpdates();
     };
   }, [id]);
 
@@ -169,8 +187,8 @@ export default function CampaignScreen() {
               campaign.status === "ended"
                 ? "Campaign Ended"
                 : campaign.status === "completed"
-                ? "Campaign Completed"
-                : "Donate Now"
+                  ? "Campaign Completed"
+                  : "Donate Now"
             }
             onPress={() =>
               router.push({
@@ -184,6 +202,30 @@ export default function CampaignScreen() {
               campaign.status === "ended" || campaign.status === "completed"
             }
           />
+
+          {/* Campaign Updates Section */}
+          {updates.length > 0 && (
+            <View className="mt-8">
+              <View className="flex-row justify-between items-center mb-4">
+                <Text className="text-xl font-bold text-gray-900">
+                  Recent Updates
+                </Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/campaign/updates",
+                      params: { id: campaign.id },
+                    })
+                  }
+                >
+                  <Text className="text-green-600 font-semibold">See All</Text>
+                </TouchableOpacity>
+              </View>
+              {updates.map((update) => (
+                <UpdateCard key={update.id} update={update} />
+              ))}
+            </View>
+          )}
 
           {/* Recent Donations */}
           {donations.length > 0 && (

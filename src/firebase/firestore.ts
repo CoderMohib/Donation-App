@@ -16,7 +16,7 @@ import {
     updateDoc,
     where,
 } from 'firebase/firestore';
-import { Campaign, Donation } from '../types';
+import { Campaign, CampaignUpdate, Donation } from '../types';
 import { db, ensureFirebaseReady } from './firebase';
 
 // ==================== CAMPAIGNS ====================
@@ -665,5 +665,62 @@ export const updateUserCampaignStats = async (
     await updateDoc(userRef, {
         totalCampaigns: increment(incrementBy),
         updatedAt: Date.now(),
+    });
+};
+
+// ==================== CAMPAIGN UPDATES ====================
+
+
+
+/**
+ * Get all updates for a campaign
+ */
+export const getCampaignUpdates = async (
+    campaignId: string,
+    limitCount?: number
+): Promise<CampaignUpdate[]> => {
+    ensureFirebaseReady();
+    if (!db) throw new Error('Firebase is not initialized');
+
+    const constraints: QueryConstraint[] = [
+        where('campaignId', '==', campaignId),
+        orderBy('createdAt', 'desc'),
+    ];
+
+    if (limitCount) {
+        constraints.push(limit(limitCount));
+    }
+
+    const q = query(collection(db, 'campaign_updates'), ...constraints);
+    const querySnapshot = await getDocs(q);
+
+    return querySnapshot.docs.map(doc => doc.data() as CampaignUpdate);
+};
+
+/**
+ * Subscribe to campaign updates in real-time
+ */
+export const subscribeToCampaignUpdates = (
+    campaignId: string,
+    callback: (updates: CampaignUpdate[]) => void,
+    limitCount?: number
+): Unsubscribe => {
+    ensureFirebaseReady();
+    if (!db) throw new Error('Firebase is not initialized');
+
+    const constraints: QueryConstraint[] = [
+        where('campaignId', '==', campaignId),
+        orderBy('createdAt', 'desc'),
+    ];
+
+    if (limitCount) {
+        constraints.push(limit(limitCount));
+    }
+
+    const q = query(collection(db, 'campaign_updates'), ...constraints);
+
+    return onSnapshot(q, (querySnapshot) => {
+        const updates = querySnapshot.docs.map(doc => doc.data() as CampaignUpdate);
+        callback(updates);
     });
 };

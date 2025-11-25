@@ -93,7 +93,7 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <DashboardLayout title="Notifications" showBackButton>
+    <DashboardLayout title="Notifications" showBackButton scrollable={false}>
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <Text className="text-gray-500">Loading...</Text>

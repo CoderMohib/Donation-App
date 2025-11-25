@@ -7,6 +7,7 @@ export interface AppNotification {
   data: {
     campaignId?: string;
     donationId?: string;
+    updateId?: string;
     action?: string;
   };
   read: boolean;
