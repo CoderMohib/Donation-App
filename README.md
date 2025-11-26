@@ -2,6 +2,32 @@
 
 A **production-ready** donation platform built with **Expo Router**, **NativeWind**, **TypeScript**, and **Firebase**. Features a fully reusable component architecture with modern UI/UX, real-time updates, admin dashboard, and push notifications.
 
+## 🛠️ Built With
+
+![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)
+![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-039BE5?style=for-the-badge&logo=Firebase&logoColor=white)
+![Expo Router](https://img.shields.io/badge/Expo_Router-000020?style=for-the-badge&logo=expo&logoColor=white)
+![NativeWind](https://img.shields.io/badge/NativeWind-38BDF8?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38BDF8?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
+![React Navigation](https://img.shields.io/badge/React_Navigation-6B52AE?style=for-the-badge&logo=react&logoColor=white)
+![EAS Build](https://img.shields.io/badge/EAS_Build-000020?style=for-the-badge&logo=expo&logoColor=white)
+
+**Core Technologies:**
+- **Expo SDK 54** - React Native framework for cross-platform development
+- **TypeScript** - Type-safe JavaScript for better code quality
+- **Firebase** - Backend-as-a-Service (Authentication, Firestore, Storage)
+- **Expo Router** - File-based routing system
+- **NativeWind** - Tailwind CSS for React Native
+- **Cloudinary** - Image upload and CDN service
+- **Expo Notifications** - Push notification system
+- **React Navigation** - Navigation library
+- **React Native Reanimated** - Animation library
+- **AsyncStorage** - Local data persistence
+- **EAS Build** - Cloud build service for Expo apps
+
 ## ✨ Key Features
 
 ### User Features
@@ -73,6 +99,7 @@ Donation-App/
 │   │   ├── cards/
 │   │   │   ├── CampaignCard.tsx     # Campaign display card
 │   │   │   ├── DonationCard.tsx     # Donation history card
+│   │   │   ├── UpdateCard.tsx       # Campaign update card
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── forms/
@@ -131,6 +158,7 @@ Donation-App/
 │   │   ├── useCampaigns.ts         # Campaigns list management
 │   │   ├── useDonations.ts         # Donations management
 │   │   ├── useNotifications.ts     # Push notifications hook
+│   │   ├── useUserNotifications.ts # User notifications management hook
 │   │   ├── useToast.ts             # Toast notifications hook
 │   │   ├── useEmailVerification.ts # Email verification hook
 │   │   └── index.ts                # Hook exports
@@ -138,6 +166,7 @@ Donation-App/
 │   ├── types/                      # TypeScript Type Definitions
 │   │   ├── User.ts                 # User interface
 │   │   ├── Campaign.ts             # Campaign interface
+│   │   ├── CampaignUpdate.ts       # Campaign update interface
 │   │   ├── Donation.ts             # Donation interface
 │   │   ├── Notification.ts         # Notification interface
 │   │   ├── cloudinary.ts           # Cloudinary types
@@ -151,7 +180,8 @@ Donation-App/
 │   │   └── index.ts                # Utility exports
 │   │
 │   └── services/
-│       └── notifications.ts        # Notification service
+│       ├── notifications.ts        # Push notification registration service
+│       └── notificationService.ts # Notification CRUD operations service
 │
 ├── assets/                         # Static Assets
 │   ├── app_logo.png               # App logo
@@ -171,9 +201,12 @@ Donation-App/
 │
 ├── android/                        # Android native code
 ├── scripts/                        # Build scripts
-│   └── reset-project.js
+│   ├── reset-project.js
+│   ├── eas-build-pre-install.js   # EAS build pre-install script
+│   └── eas-build-pre-install.sh   # EAS build pre-install script (bash)
 │
-├── app.json                        # Expo configuration
+├── app.config.js                   # Expo configuration (dynamic)
+├── app.json                        # Expo configuration (legacy)
 ├── package.json                    # Dependencies
 ├── tsconfig.json                   # TypeScript config
 ├── tailwind.config.js             # Tailwind/NativeWind config
@@ -406,12 +439,263 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
   data: {
     campaignId?: string;         // Related campaign ID
     donationId?: string;         // Related donation ID
+    updateId?: string;           // Related update ID
     action?: string;             // Action type
   };
   read: boolean;                  // Read status
   createdAt: number;             // Creation timestamp
 }
 ```
+
+## 🔔 Notification System
+
+The app features a comprehensive notification system that includes both in-app notifications (stored in Firestore) and push notifications (via Expo Notifications). The system provides real-time updates for donations, campaign milestones, and administrative actions.
+
+### Notification Architecture
+
+#### Push Notification Registration
+The app registers devices for push notifications using Expo's notification service:
+
+**Service**: `src/services/notifications.ts`
+- `registerForPushNotifications(userId: string)` - Registers device and saves Expo push token to Firestore
+  - Requests notification permissions
+  - Creates Android notification channel (`default`)
+  - Gets Expo push token
+  - Saves token to user document in Firestore (`users/{userId}/pushToken`)
+
+**Configuration**:
+- Android notification channel: `default`
+  - Importance: `MAX`
+  - Vibration pattern: `[0, 250, 250, 250]`
+  - Light color: `#10b981`
+- Foreground notification handler: Shows alerts, plays sound, sets badge, shows banner
+
+#### Notification Types
+
+1. **`donation`** - Donation-related notifications
+   - New donation received (to campaign owner)
+   - Thank you message (to donor)
+
+2. **`campaign_update`** - Campaign status changes
+   - Campaign started
+   - Campaign updated
+
+3. **`admin_action`** - Administrative actions
+   - Campaign ended by admin
+   - User promoted to admin
+
+4. **`milestone`** - Campaign milestone achievements
+   - Goal reached (100%)
+   - Progress milestones (25%, 50%, 75%)
+
+### Notification Service Functions
+
+**Service**: `src/services/notificationService.ts`
+
+#### Create Notification
+```typescript
+createNotification(
+  userId: string,
+  type: 'donation' | 'campaign_update' | 'admin_action' | 'milestone',
+  title: string,
+  body: string,
+  data?: {
+    campaignId?: string;
+    donationId?: string;
+    updateId?: string;
+    action?: string;
+  }
+): Promise<string>
+```
+Creates a notification document in Firestore `notifications` collection.
+
+#### Mark as Read
+```typescript
+markNotificationAsRead(notificationId: string): Promise<void>
+```
+Marks a single notification as read.
+
+#### Mark All as Read
+```typescript
+markAllAsRead(userId: string): Promise<void>
+```
+Marks all unread notifications for a user as read.
+
+#### Delete Notification
+```typescript
+deleteNotification(notificationId: string): Promise<void>
+```
+Deletes a notification from Firestore.
+
+#### Get User Notifications
+```typescript
+getUserNotifications(userId: string, limitCount?: number): Promise<AppNotification[]>
+```
+Retrieves user's notifications with pagination (default limit: 50).
+
+#### Get Unread Count
+```typescript
+getUnreadCount(userId: string): Promise<number>
+```
+Returns the count of unread notifications for a user.
+
+### Notification Hooks
+
+#### useNotifications
+**Location**: `src/hooks/useNotifications.ts`
+
+Handles push notification registration and navigation:
+```typescript
+const { expoPushToken, notification } = useNotifications();
+```
+
+**Features**:
+- Automatically registers for push notifications when user logs in
+- Listens for notifications received while app is in foreground
+- Handles notification taps and navigates to relevant screens
+  - If `data.campaignId` exists → navigates to `/campaign/{campaignId}`
+  - If `data.donationId` exists → navigates to `/my-donations`
+
+#### useUserNotifications
+**Location**: `src/hooks/useUserNotifications.ts`
+
+Manages user's in-app notifications:
+```typescript
+const {
+  notifications,
+  unreadCount,
+  loading,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification
+} = useUserNotifications(userId);
+```
+
+**Features**:
+- Real-time subscription to user's notifications
+- Automatic unread count calculation
+- Methods to mark notifications as read (single/all)
+- Method to delete notifications
+
+### Notification Components
+
+#### NotificationBell
+**Location**: `src/components/notifications/NotificationBell.tsx`
+
+Displays notification bell icon with unread count badge:
+- Shows unread count badge (red circle with number)
+- Badge shows "9+" if count exceeds 9
+- Navigates to `/notifications` on press
+- Real-time updates via Firestore listener
+
+### Notification Triggers
+
+Notifications are automatically created in the following scenarios:
+
+#### 1. Campaign Started
+**Trigger**: When a campaign status changes from `draft` to `in_progress`
+- **Type**: `campaign_update`
+- **Recipient**: Campaign owner
+- **Title**: "Campaign Started! 🚀"
+- **Body**: `Your campaign "{campaign.title}" is now live and accepting donations!`
+- **Data**: `{ campaignId: string }`
+
+#### 2. Campaign Ended
+**Trigger**: When an admin manually ends a campaign
+- **Type**: `admin_action`
+- **Recipient**: Campaign owner
+- **Title**: "Campaign Ended"
+- **Body**: `Your campaign "{campaign.title}" has been ended by an administrator.`
+- **Data**: `{ campaignId: string, action: 'ended' }`
+
+#### 3. Goal Reached (100%)
+**Trigger**: When campaign `donatedAmount >= targetAmount` and status is `in_progress`
+- **Type**: `milestone`
+- **Recipient**: Campaign owner
+- **Title**: "Goal Reached! 🎯"
+- **Body**: `Congratulations! Your campaign "{campaign.title}" has reached its funding goal of ${targetAmount}!`
+- **Data**: `{ campaignId: string }`
+
+#### 4. New Donation Received
+**Trigger**: When a donation is successfully created
+- **Type**: `donation`
+- **Recipients**: 
+  - Campaign owner
+  - Donor
+- **To Campaign Owner**:
+  - **Title**: "New Donation Received!"
+  - **Body**: `{donorName} donated ${amount} to your campaign "{campaign.title}"`
+  - **Data**: `{ campaignId: string, donationId: string }`
+- **To Donor**:
+  - **Title**: "Thank You for Your Donation! 💚"
+  - **Body**: `Your donation of ${amount} to "{campaign.title}" has been received. You're making a real difference!`
+  - **Data**: `{ campaignId: string, donationId: string }`
+
+#### 5. Milestone Reached (25%, 50%, 75%)
+**Trigger**: When a donation causes campaign to cross a milestone threshold
+- **Type**: `milestone`
+- **Recipient**: Campaign owner
+- **Title**: "Milestone Reached! 🎉"
+- **Body**: `Your campaign "{campaign.title}" has reached {milestone}% of its goal!`
+- **Data**: `{ campaignId: string }`
+- **Milestones**: 25%, 50%, 75% of target amount
+
+#### 6. User Promoted to Admin
+**Trigger**: When an admin promotes a user to admin role
+- **Type**: `admin_action`
+- **Recipient**: Promoted user
+- **Title**: "Admin Access Granted"
+- **Body**: `You have been promoted to administrator. You now have access to admin features.`
+- **Data**: `{ action: 'promoted' }`
+
+### Push Notification Payload Structure
+
+When sending push notifications via Expo Push API, use this format:
+
+```json
+{
+  "to": "ExponentPushToken[USER_PUSH_TOKEN]",
+  "sound": "default",
+  "title": "Notification Title",
+  "body": "Notification message",
+  "data": {
+    "campaignId": "optional-campaign-id",
+    "donationId": "optional-donation-id",
+    "type": "donation" | "campaign_update" | "admin_action" | "milestone"
+  },
+  "channelId": "default"
+}
+```
+
+**Important Notes**:
+- Use `channelId: "default"` for Android notifications
+- Include `campaignId` or `donationId` in `data` for navigation
+- Get push token from `users/{userId}/pushToken` in Firestore
+- Send notifications via Expo Push API: `https://exp.host/--/api/v2/push/send`
+
+### Notification Navigation
+
+The app automatically navigates users when they tap on notifications:
+
+- **Campaign notifications** (`data.campaignId` exists) → `/campaign/{campaignId}`
+- **Donation notifications** (`data.donationId` exists) → `/my-donations`
+- **Update notifications** (`data.updateId` exists) → `/campaign/{campaignId}` (future feature)
+
+Navigation is handled in:
+- `useNotifications` hook - For push notifications
+- `app/notifications.tsx` - For in-app notification list
+
+### Notification Screen
+
+**Location**: `app/notifications.tsx`
+
+Features:
+- Real-time list of user's notifications
+- Unread/read status indicators
+- Tap to navigate to related content
+- Mark as read on tap
+- Sorted by creation date (newest first)
+- Empty state when no notifications
 
 ## 🔒 Firestore Security Rules
 
@@ -696,6 +980,29 @@ Handles push notifications registration and navigation
 ```typescript
 const { expoPushToken, notification } = useNotifications();
 ```
+**Features**:
+- Automatically registers device for push notifications
+- Saves Expo push token to Firestore
+- Listens for foreground notifications
+- Handles notification tap navigation
+
+### useUserNotifications
+Manages user's in-app notifications with real-time updates
+```typescript
+const {
+  notifications,
+  unreadCount,
+  loading,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification
+} = useUserNotifications(userId);
+```
+**Features**:
+- Real-time subscription to notifications
+- Automatic unread count calculation
+- Mark notifications as read (single/all)
+- Delete notifications
 
 ### useToast
 Manages toast notification state
@@ -891,10 +1198,23 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 - [x] Role promotion
 
 ### Notifications
-- [x] Push notification system
-- [x] Notification registration
-- [x] Notification navigation
+- [x] Push notification system (Expo Notifications)
+- [x] Device registration and token management
+- [x] Android notification channel configuration
+- [x] In-app notification system (Firestore)
+- [x] Notification types (donation, campaign_update, admin_action, milestone)
+- [x] Real-time notification updates
+- [x] Notification navigation (deep linking)
 - [x] Notification list screen
+- [x] Unread count badge
+- [x] Mark as read functionality
+- [x] Delete notifications
+- [x] Automatic notification triggers
+  - Campaign started/ended
+  - New donations
+  - Goal reached
+  - Milestone achievements (25%, 50%, 75%, 100%)
+  - Admin actions
 
 ### UI/UX
 - [x] Modern gradient designs
@@ -916,17 +1236,79 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 - **Role-Based Access** - Admin-only features protected
 - **Transaction Safety** - Atomic operations for donations
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack Details
 
-- **Framework**: Expo SDK 54
-- **Routing**: Expo Router (file-based)
-- **Styling**: NativeWind (Tailwind CSS for React Native)
-- **Language**: TypeScript
-- **Backend**: Firebase (Auth, Firestore, Storage)
-- **Notifications**: Expo Notifications
-- **Icons**: @expo/vector-icons
-- **Animations**: React Native Reanimated
-- **State Management**: React Hooks
+### Frontend Framework
+- **Expo SDK 54** - React Native framework for cross-platform mobile development
+- **React Native 0.81.5** - Mobile app framework
+- **React 19.1.0** - UI library
+
+### Routing & Navigation
+- **Expo Router 6.0.15** - File-based routing system with type-safe navigation
+- **React Navigation 7.x** - Navigation library for tab and stack navigation
+  - `@react-navigation/native` - Core navigation library
+  - `@react-navigation/bottom-tabs` - Bottom tab navigator
+  - `@react-navigation/elements` - Navigation UI elements
+
+### Language & Type Safety
+- **TypeScript 5.9.2** - Type-safe JavaScript with full type coverage
+- **ESLint 9.25.0** - Code linting and quality checks
+- **ESLint Config Expo** - Expo-specific ESLint configuration
+
+### Styling
+- **NativeWind 4.2.1** - Tailwind CSS for React Native
+- **Tailwind CSS 3.4.18** - Utility-first CSS framework
+- **Expo Linear Gradient** - Gradient components
+- **React Native Reanimated 4.1.1** - High-performance animations
+- **React Native Gesture Handler** - Native gesture handling
+
+### Backend Services
+- **Firebase 12.6.0** - Backend-as-a-Service
+  - **Firebase Auth** - User authentication with email/password
+  - **Cloud Firestore** - NoSQL database with real-time updates
+  - **Firebase Storage** - File storage (optional, Cloudinary preferred)
+- **Firebase Admin SDK 13.6.0** - Server-side Firebase operations
+- **Cloudinary** - Image upload and CDN service
+
+### Notifications
+- **Expo Notifications 0.32.13** - Push notification system
+  - Android notification channels
+  - iOS notification handling
+  - Foreground notification display
+
+### Storage & Persistence
+- **AsyncStorage 2.2.0** - Local data persistence
+  - Used for Firebase Auth persistence
+  - User preferences storage
+
+### UI Components & Icons
+- **@expo/vector-icons 15.0.3** - Icon library (Ionicons, MaterialIcons, etc.)
+- **Expo Image 3.0.10** - Optimized image component
+- **Expo Image Picker 17.0.8** - Image selection from device
+- **Expo Haptics 15.0.7** - Haptic feedback
+
+### Build & Deployment
+- **EAS Build** - Expo Application Services for cloud builds
+- **EAS CLI** - Command-line tools for EAS services
+- **Expo Constants 18.0.10** - App configuration access
+- **Expo Device 8.0.9** - Device information
+
+### Development Tools
+- **Expo Dev Client** - Custom development build
+- **Metro Bundler** - JavaScript bundler
+- **Babel** - JavaScript compiler
+- **Prettier Plugin Tailwind** - Code formatting
+
+### Additional Libraries
+- **React Native Safe Area Context** - Safe area handling
+- **React Native Screens** - Native screen management
+- **React Native Web** - Web platform support
+- **Expo Linking** - Deep linking support
+- **Expo Web Browser** - In-app browser
+- **Expo Status Bar** - Status bar customization
+- **Expo Splash Screen** - Splash screen management
+- **Expo Font** - Custom font loading
+- **Expo System UI** - System UI customization
 
 ## 📚 Documentation
 
