@@ -18,6 +18,16 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
+    // Helper function to check if only donation fields are being updated
+    function isDonationUpdate() {
+      // Allow updates to donatedAmount, updatedAt, and status (for auto-completion)
+      let allowedFields = ['donatedAmount', 'updatedAt', 'status'];
+      let changedFields = request.resource.data.diff(resource.data).affectedKeys();
+      
+      // Check if only allowed fields are being changed
+      return changedFields.hasOnly(allowedFields);
+    }
+    
     // Users collection
     match /users/{userId} {
       allow read: if isAuthenticated();
@@ -32,9 +42,14 @@ service cloud.firestore {
     match /campaigns/{campaignId} {
       allow read: if true; // Anyone can read campaigns
       allow create: if isAuthenticated();
-      // Campaign owner or admin can update
+      
+      // Campaign owner or admin can update any field
+      // OR any authenticated user can update donation-related fields only
       allow update: if isAuthenticated() && 
-                      (isOwner(resource.data.ownerId) || isAdmin());
+                      (isOwner(resource.data.ownerId) || 
+                       isAdmin() || 
+                       isDonationUpdate());
+      
       // Campaign owner or admin can delete
       allow delete: if isAuthenticated() && 
                       (isOwner(resource.data.ownerId) || isAdmin());
@@ -46,6 +61,22 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       // Admins can update/delete donations
       allow update, delete: if isAdmin();
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // Any authenticated user can create notifications
+      // (needed for donation notifications, milestone notifications, etc.)
+      allow create: if isAuthenticated();
+      
+      // Users can update/delete their own notifications
+      // (for marking as read, deleting notifications)
+      allow update, delete: if isAuthenticated() && 
+                              resource.data.userId == request.auth.uid;
     }
   }
 }
