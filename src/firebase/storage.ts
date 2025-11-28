@@ -110,10 +110,4 @@ export const uploadCampaignImage = async (
  * Note: This requires server-side implementation with API secret
  * For now, we'll keep this as a placeholder
  */
-export const deleteImage = async (imageUrl: string): Promise<void> => {
-    // Cloudinary image deletion requires authenticated API calls
-    // This would need to be implemented on a backend server
-    // For the free tier with unsigned uploads, deletion is typically
-    // handled through the Cloudinary dashboard
-    console.warn('Image deletion is not implemented for client-side Cloudinary uploads');
-};
+
