@@ -1,5 +1,6 @@
 import { PrimaryButton } from "@/src/components/buttons";
 import { DonationCard } from "@/src/components/cards";
+import { DonationChart } from "@/src/components/DonationChart";
 import { DashboardLayout } from "@/src/components/layouts";
 import { ProfileDropdown } from "@/src/components/navigation";
 import { auth, getUserDonations } from "@/src/firebase";
@@ -19,10 +20,12 @@ import {
 } from "react-native";
 
 const DONATIONS_PER_PAGE = 10;
+const CHART_DATA_LIMIT = 100; // Fetch last 100 donations for the chart
 
 export default function MyDonationsScreen() {
   const router = useRouter();
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [chartDonations, setChartDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -31,17 +34,16 @@ export default function MyDonationsScreen() {
 
   useEffect(() => {
     loadDonations();
+    loadChartDonations();
   }, []);
 
   const loadDonations = async (limit: number = DONATIONS_PER_PAGE) => {
     const user = auth?.currentUser;
     if (!user) {
-      
       setLoading(false);
       return;
     }
 
-    
     const [data, error] = await asyncHandler(getUserDonations(user.uid, limit));
 
     if (error) {
@@ -50,14 +52,24 @@ export default function MyDonationsScreen() {
 
     if (data) {
       setDonations(data);
-      // Check if there might be more donations
       setHasMore(data.length >= limit);
     } else {
-      
       setHasMore(false);
     }
     setLoading(false);
     setLoadingMore(false);
+  };
+
+  const loadChartDonations = async () => {
+    const user = auth?.currentUser;
+    if (!user) return;
+
+    const [data, error] = await asyncHandler(
+      getUserDonations(user.uid, CHART_DATA_LIMIT)
+    );
+    if (data) {
+      setChartDonations(data);
+    }
   };
 
   const handleLoadMore = async () => {
@@ -72,7 +84,10 @@ export default function MyDonationsScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     setCurrentLimit(DONATIONS_PER_PAGE);
-    await loadDonations(DONATIONS_PER_PAGE);
+    await Promise.all([
+      loadDonations(DONATIONS_PER_PAGE),
+      loadChartDonations(),
+    ]);
     setRefreshing(false);
   };
 
@@ -138,64 +153,67 @@ export default function MyDonationsScreen() {
             </View>
           </View>
         ) : (
-          <>
-            <Text className="text-xl font-bold text-gray-900 mb-4">
-              Your Donation History
-            </Text>
-            <FlatList
-              data={donations}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <DonationCard donation={item} showCampaign />
-              )}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  colors={["#ff7a5e"]}
-                  tintColor="#ff7a5e"
-                />
-              }
-              ListFooterComponent={
-                hasMore && donations.length > 0 ? (
-                  <View className="py-4">
-                    {loadingMore ? (
-                      <View className="flex-row items-center justify-center py-4">
-                        <ActivityIndicator size="small" color="#ff7a5e" />
-                        <Text className="text-gray-500 ml-2">
-                          Loading more...
-                        </Text>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        onPress={handleLoadMore}
-                        className="bg-primary-500 rounded-full py-4 px-6 mx-4 flex-row items-center justify-center"
-                        style={{
-                          shadowColor: "#ff7a5e",
-                          shadowOffset: { width: 0, height: 4 },
-                          shadowOpacity: 0.3,
-                          shadowRadius: 8,
-                          elevation: 6,
-                        }}
-                        activeOpacity={0.8}
-                      >
-                        <Ionicons
-                          name="add-circle-outline"
-                          size={20}
-                          color="white"
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text className="text-white font-bold text-base">
-                          Load More Donations
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                ) : null
-              }
-            />
-          </>
+          <FlatList
+            data={donations}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={
+              <View className="mb-6">
+                <DonationChart donations={chartDonations} />
+                <Text className="text-xl font-bold text-gray-900 mt-6 mb-2">
+                  Your Donation History
+                </Text>
+              </View>
+            }
+            renderItem={({ item }) => (
+              <DonationCard donation={item} showCampaign />
+            )}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={["#ff7a5e"]}
+                tintColor="#ff7a5e"
+              />
+            }
+            ListFooterComponent={
+              hasMore && donations.length > 0 ? (
+                <View className="py-4">
+                  {loadingMore ? (
+                    <View className="flex-row items-center justify-center py-4">
+                      <ActivityIndicator size="small" color="#ff7a5e" />
+                      <Text className="text-gray-500 ml-2">
+                        Loading more...
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={handleLoadMore}
+                      className="bg-primary-500 rounded-full py-4 px-6 mx-4 flex-row items-center justify-center"
+                      style={{
+                        shadowColor: "#ff7a5e",
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                        elevation: 6,
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons
+                        name="add-circle-outline"
+                        size={20}
+                        color="white"
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text className="text-white font-bold text-base">
+                        Load More Donations
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : null
+            }
+          />
         )}
       </View>
     </DashboardLayout>
