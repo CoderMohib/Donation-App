@@ -1,6 +1,16 @@
+import { useAuth } from "@/src/hooks/useAuth";
 import { Donation } from "@/src/types/Donation";
+import { generateDonationPDF } from "@/src/utils/generateDonationPDF";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
-import { Dimensions, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 
 type FilterType = "day" | "month" | "year";
@@ -11,7 +21,9 @@ interface DonationChartProps {
 
 export const DonationChart: React.FC<DonationChartProps> = ({ donations }) => {
   const [filter, setFilter] = useState<FilterType>("day");
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const screenWidth = Dimensions.get("window").width;
+  const { user } = useAuth();
 
   const chartData = useMemo(() => {
     if (!donations || donations.length === 0) return [];
@@ -69,6 +81,59 @@ export const DonationChart: React.FC<DonationChartProps> = ({ donations }) => {
     });
   }, [donations, filter]);
 
+  const getPeriodLabel = (): string => {
+    const now = new Date();
+    if (filter === "day") {
+      return `Daily Statement - ${now.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}`;
+    } else if (filter === "month") {
+      return `Monthly Statement - ${now.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      })}`;
+    } else {
+      return `Yearly Statement - ${now.getFullYear()}`;
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!user) {
+      Alert.alert("Error", "Please log in to export donation statements");
+      return;
+    }
+
+    if (donations.length === 0) {
+      Alert.alert(
+        "No Data",
+        "No donations available to export for this period"
+      );
+      return;
+    }
+
+    setIsGeneratingPDF(true);
+
+    const result = await generateDonationPDF({
+      donations,
+      user,
+      filter,
+      periodLabel: getPeriodLabel(),
+    });
+
+    setIsGeneratingPDF(false);
+
+    if (result.success) {
+      Alert.alert(
+        "Success",
+        "Donation statement has been generated and shared!"
+      );
+    } else {
+      Alert.alert("Error", result.error || "Failed to generate PDF");
+    }
+  };
+
   const renderFilterButton = (type: FilterType, label: string) => (
     <TouchableOpacity
       className={`flex-1 py-2 items-center rounded-md ${
@@ -94,9 +159,29 @@ export const DonationChart: React.FC<DonationChartProps> = ({ donations }) => {
       className="bg-white rounded-2xl p-4 my-2.5 border border-gray-100"
       style={{ elevation: 2 }}
     >
-      <Text className="text-lg font-bold text-gray-800 mb-4">
-        Donation History
-      </Text>
+      <View className="flex-row justify-between items-center mb-4">
+        <Text className="text-lg font-bold text-gray-800">
+          Donation History
+        </Text>
+
+        <TouchableOpacity
+          className="flex-row items-center bg-primary-500 px-3 py-2 rounded-lg"
+          style={{ elevation: 2 }}
+          onPress={handleExportPDF}
+          disabled={isGeneratingPDF || donations.length === 0}
+        >
+          {isGeneratingPDF ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <>
+              <Ionicons name="download-outline" size={16} color="white" />
+              <Text className="text-white text-xs font-semibold ml-1">
+                Export PDF
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
 
       <View className="flex-row mb-5 bg-gray-100 rounded-lg p-1">
         {renderFilterButton("day", "Day")}

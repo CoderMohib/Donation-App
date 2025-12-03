@@ -1,7 +1,14 @@
 import { ProfileDropdown } from "@/src/components";
+import {
+  CampaignPerformanceChart,
+  DonationStatusChart,
+  DonationTrendChart,
+  UserGrowthChart,
+} from "@/src/components/admin/AdminDashboardCharts";
 import { DashboardLayout } from "@/src/components/layouts";
 import { db } from "@/src/firebase/firebase";
 import { useAuth } from "@/src/hooks";
+import { useAdminChartData } from "@/src/hooks/useAdminChartData";
 import { Donation } from "@/src/types";
 import { formatCurrency } from "@/src/utils";
 import { Ionicons } from "@expo/vector-icons";
@@ -45,6 +52,14 @@ export default function AdminDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [timeRange, setTimeRange] = useState(30);
+
+  // Fetch chart data
+  const {
+    chartData,
+    loading: chartsLoading,
+    refresh: refreshCharts,
+  } = useAdminChartData(timeRange);
 
   useEffect(() => {
     if (authLoading) return;
@@ -112,9 +127,32 @@ export default function AdminDashboardScreen() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadDashboardData();
+    await Promise.all([loadDashboardData(), refreshCharts()]);
     setRefreshing(false);
   };
+
+  const TimeRangeButton = ({
+    days,
+    label,
+  }: {
+    days: number;
+    label: string;
+  }) => (
+    <TouchableOpacity
+      className={`px-4 py-2 rounded-lg mr-2 ${
+        timeRange === days ? "bg-primary-500" : "bg-gray-200"
+      }`}
+      onPress={() => setTimeRange(days)}
+    >
+      <Text
+        className={`text-sm font-semibold ${
+          timeRange === days ? "text-white" : "text-gray-600"
+        }`}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
 
   const StatCard = ({
     title,
@@ -203,7 +241,7 @@ export default function AdminDashboardScreen() {
       title="Admin Dashboard"
       showBackButton={false}
       scrollable={false}
-      rightAction={<ProfileDropdown/>}
+      rightAction={<ProfileDropdown />}
     >
       <ScrollView
         className="flex-1 bg-gray-50"
@@ -224,40 +262,89 @@ export default function AdminDashboardScreen() {
           <Text className="text-gray-500">{`Here's what's happening with your platform`}</Text>
         </View>
 
-        {/* Statistics Grid */}
-        <View className="px-4 py-4">
-          <View className="flex-row gap-3 mb-3">
-            <StatCard
-              title="Total Users"
-              value={stats.totalUsers}
-              icon="people"
-              color="#4894a8" // secondary-500
-              bgColor="bg-secondary-50"
-            />
-            <StatCard
-              title="Total Campaigns"
-              value={stats.totalCampaigns}
-              icon="heart"
-              color="#ff7a5e" // primary-500
-              bgColor="bg-primary-50"
-            />
-          </View>
-          <View className="flex-row gap-3">
-            <StatCard
-              title="Total Donations"
-              value={stats.totalDonations}
-              icon="gift"
-              color="#10B981" // green-500
-              bgColor="bg-green-50"
-            />
-            <StatCard
-              title="Amount Raised"
-              value={formatCurrency(stats.totalAmountDonated)}
-              icon="cash"
-              color="#F59E0B" // yellow-500
-              bgColor="bg-yellow-50"
-            />
-          </View>
+        {/* Statistics Grid - Horizontal Scroll */}
+        <View className="p-4">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12 }}
+          >
+            <View style={{ width: 160 }}>
+              <StatCard
+                title="Total Users"
+                value={stats.totalUsers}
+                icon="people"
+                color="#4894a8"
+                bgColor="bg-secondary-50"
+              />
+            </View>
+            <View style={{ width: 160 }}>
+              <StatCard
+                title="Campaigns"
+                value={stats.totalCampaigns}
+                icon="heart"
+                color="#ff7a5e"
+                bgColor="bg-primary-50"
+              />
+            </View>
+            <View style={{ width: 160 }}>
+              <StatCard
+                title="Donations"
+                value={stats.totalDonations}
+                icon="gift"
+                color="#10B981"
+                bgColor="bg-green-50"
+              />
+            </View>
+            <View style={{ width: 160 }}>
+              <StatCard
+                title="Amount Raised"
+                value={formatCurrency(stats.totalAmountDonated)}
+                icon="cash"
+                color="#F59E0B"
+                bgColor="bg-yellow-50"
+              />
+            </View>
+          </ScrollView>
+        </View>
+
+        {/* Time Range Filter */}
+        <View className="px-4 py-2">
+          <Text className="text-gray-700 text-sm font-semibold mb-2">
+            Time Range
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <TimeRangeButton days={7} label="7 Days" />
+            <TimeRangeButton days={30} label="30 Days" />
+            <TimeRangeButton days={90} label="3 Months" />
+          </ScrollView>
+        </View>
+
+        {/* Charts Section */}
+        <View className="px-4 py-2">
+          <Text className="text-gray-900 text-xl font-bold mb-4">
+            Analytics Overview
+          </Text>
+
+          {chartsLoading ? (
+            <View className="h-48 justify-center items-center">
+              <ActivityIndicator size="large" color="#ff7a5e" />
+              <Text className="text-gray-500 mt-2">Loading charts...</Text>
+            </View>
+          ) : chartData ? (
+            <>
+              <DonationTrendChart data={chartData.donationTrend} />
+              <CampaignPerformanceChart data={chartData.campaignPerformance} />
+
+              <View className="flex-row gap-3 mb-4">
+                <View className="flex-1">
+                  <DonationStatusChart data={chartData.donationStatus} />
+                </View>
+              </View>
+
+              <UserGrowthChart data={chartData.userGrowth} />
+            </>
+          ) : null}
         </View>
 
         {/* Quick Actions */}
