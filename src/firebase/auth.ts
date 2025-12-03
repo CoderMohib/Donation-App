@@ -139,6 +139,22 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 /**
+ * Get user data by user ID
+ */
+export const getUserById = async (userId: string): Promise<User | null> => {
+    ensureFirebaseReady();
+    if (!db) throw new Error('Firebase is not initialized');
+
+    const userDoc = await getDoc(doc(db, 'users', userId));
+
+    if (!userDoc.exists()) {
+        return null;
+    }
+
+    return userDoc.data() as User;
+};
+
+/**
  * Update user profile
  */
 export const updateUserProfile = async (

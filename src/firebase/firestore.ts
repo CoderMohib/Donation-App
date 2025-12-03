@@ -546,6 +546,51 @@ export const createDonation = async (
             console.error('Failed to send notification:', notificationError);
         }
         
+        // Send emails after successful transaction
+        try {
+            const { getUserById } = await import('./auth');
+            const { sendDonationEmails } = await import('../services/emailService');
+            
+            // Get campaign owner and donor user data for emails
+            const [campaignOwner, donor] = await Promise.all([
+                getUserById(campaign.ownerId),
+                getUserById(donationData.donorId),
+            ]);
+            
+            if (campaignOwner?.email && donor?.email) {
+                console.log('📧 Sending donation emails...');
+                
+                const newDonatedAmount = campaign.donatedAmount + donationData.amount;
+                
+                const emailResult = await sendDonationEmails(
+                    campaignOwner.email,
+                    donor.email,
+                    {
+                        campaignOwnerName: campaign.ownerName,
+                        campaignTitle: campaign.title,
+                        donorName: donationData.donorName,
+                        amount: donationData.amount,
+                        message: donationData.message,
+                        isAnonymous: donationData.isAnonymous,
+                        campaignId: donationData.campaignId,
+                        totalRaised: newDonatedAmount,
+                        targetAmount: campaign.targetAmount,
+                    }
+                );
+                
+                if (emailResult.notificationSent && emailResult.thankYouSent) {
+                    console.log('✅ Both donation emails sent successfully');
+                } else {
+                    console.warn('⚠️ Some emails failed to send:', emailResult.errors);
+                }
+            } else {
+                console.warn('⚠️ Could not send emails: Missing email addresses');
+            }
+        } catch (emailError) {
+            // Don't fail the donation if email fails
+            console.error('Failed to send donation emails:', emailError);
+        }
+        
         return donationRef.id;
     } catch (error: any) {
         console.error('Donation transaction failed:', error);
