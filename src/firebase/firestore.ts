@@ -36,6 +36,7 @@ export const createCampaign = async (
         id: campaignRef.id,
         donatedAmount: 0,
         status: 'draft', // All campaigns start as draft
+        approvalStatus: 'pending', // Require admin approval
         createdAt: Date.now(),
         updatedAt: Date.now(),
     };
@@ -145,14 +146,23 @@ export const deleteCampaign = async (campaignId: string): Promise<void> => {
 
 /**
  * Start a campaign (draft → in_progress)
+ * Requires campaign to be approved first (unless admin override)
  */
-export const startCampaign = async (campaignId: string): Promise<void> => {
+export const startCampaign = async (
+    campaignId: string,
+    adminOverride: boolean = false
+): Promise<void> => {
     ensureFirebaseReady();
     if (!db) throw new Error('Firebase is not initialized');
 
     // Get campaign data before updating
     const campaign = await getCampaign(campaignId);
     if (!campaign) throw new Error('Campaign not found');
+
+    // Check if campaign is approved (skip check for admin override)
+    if (!adminOverride && campaign.approvalStatus !== 'approved') {
+        throw new Error('Campaign must be approved by an administrator before it can be started');
+    }
 
     const campaignRef = doc(db, 'campaigns', campaignId);
     await updateDoc(campaignRef, {
@@ -249,6 +259,48 @@ export const checkCampaignCompletion = async (campaignId: string): Promise<void>
             }
         } catch (error) {
             console.error('Failed to send goal reached notification:', error);
+        }
+
+        // Send completion email to campaign owner
+        try {
+            const { getUserById } = await import('./auth');
+            const { sendCampaignCompletionEmail } = await import('../services/emailService');
+            
+            const campaignOwner = await getUserById(campaign.ownerId);
+            
+            if (campaignOwner?.email) {
+                console.log('📧 Sending campaign completion email...');
+                
+                // Get donor count
+                const donations = await getCampaignDonations(campaignId);
+                const donorCount = new Set(donations.map(d => d.donorId)).size;
+                
+                // Calculate campaign duration
+                const campaignDuration = Date.now() - campaign.createdAt;
+                
+                const emailResult = await sendCampaignCompletionEmail(
+                    campaignOwner.email,
+                    {
+                        ownerName: campaign.ownerName,
+                        campaignTitle: campaign.title,
+                        targetAmount: campaign.targetAmount,
+                        totalRaised: campaign.donatedAmount,
+                        donorCount: donorCount,
+                        campaignDuration: campaignDuration,
+                    }
+                );
+                
+                if (emailResult.success) {
+                    console.log('✅ Campaign completion email sent successfully');
+                } else {
+                    console.warn('⚠️ Failed to send completion email:', emailResult.error);
+                }
+            } else {
+                console.warn('⚠️ Could not send completion email: Missing campaign owner email');
+            }
+        } catch (emailError) {
+            // Don't fail the completion if email fails
+            console.error('Failed to send campaign completion email:', emailError);
         }
     }
 };
@@ -769,3 +821,165 @@ export const subscribeToCampaignUpdates = (
         callback(updates);
     });
 };
+
+// ==================== ADMIN CAMPAIGN APPROVAL ====================
+
+/**
+ * Approve a campaign (Admin only)
+ */
+export const approveCampaign = async (
+    campaignId: string,
+    adminId: string,
+    approvalMessage?: string
+): Promise<void> => {
+    ensureFirebaseReady();
+    if (!db) throw new Error('Firebase is not initialized');
+
+    // Get campaign data before updating
+    const campaign = await getCampaign(campaignId);
+    if (!campaign) throw new Error('Campaign not found');
+
+    // Update campaign approval status
+    const campaignRef = doc(db, 'campaigns', campaignId);
+    await updateDoc(campaignRef, {
+        approvalStatus: 'approved',
+        approvedBy: adminId,
+        approvalDate: Date.now(),
+        updatedAt: Date.now(),
+    });
+
+    // Send in-app notification to campaign owner
+    try {
+        const { createNotification } = await import('../services/notificationService');
+        if (campaign.ownerId) {
+            await createNotification(
+                campaign.ownerId,
+                'admin_action',
+                'Campaign Approved! 🎉',
+                `Your campaign "${campaign.title}" has been approved and is ready to go live!`,
+                {
+                    campaignId: campaign.id,
+                    action: 'approved',
+                }
+            );
+        }
+    } catch (error) {
+        console.error('Failed to send campaign approval notification:', error);
+    }
+
+    // Send approval email to campaign owner
+    try {
+        const { getUserById } = await import('./auth');
+        const { sendCampaignApprovalEmail } = await import('../services/emailService');
+        
+        const campaignOwner = await getUserById(campaign.ownerId);
+        
+        if (campaignOwner?.email) {
+            console.log('📧 Sending campaign approval email...');
+            
+            const emailResult = await sendCampaignApprovalEmail(
+                campaignOwner.email,
+                {
+                    ownerName: campaign.ownerName,
+                    campaignTitle: campaign.title,
+                    campaignId: campaign.id,
+                    approvalMessage: approvalMessage,
+                }
+            );
+            
+            if (emailResult.success) {
+                console.log('✅ Campaign approval email sent successfully');
+            } else {
+                console.warn('⚠️ Failed to send approval email:', emailResult.error);
+            }
+        } else {
+            console.warn('⚠️ Could not send approval email: Missing campaign owner email');
+        }
+    } catch (emailError) {
+        // Don't fail the approval if email fails
+        console.error('Failed to send campaign approval email:', emailError);
+    }
+};
+
+/**
+ * Reject a campaign (Admin only)
+ */
+export const rejectCampaign = async (
+    campaignId: string,
+    adminId: string,
+    rejectionReason: string
+): Promise<void> => {
+    ensureFirebaseReady();
+    if (!db) throw new Error('Firebase is not initialized');
+
+    if (!rejectionReason || rejectionReason.trim() === '') {
+        throw new Error('Rejection reason is required');
+    }
+
+    // Get campaign data before updating
+    const campaign = await getCampaign(campaignId);
+    if (!campaign) throw new Error('Campaign not found');
+
+    // Update campaign approval status
+    const campaignRef = doc(db, 'campaigns', campaignId);
+    await updateDoc(campaignRef, {
+        approvalStatus: 'rejected',
+        approvedBy: adminId,
+        rejectionReason: rejectionReason,
+        approvalDate: Date.now(),
+        updatedAt: Date.now(),
+    });
+
+    // Send in-app notification to campaign owner
+    try {
+        const { createNotification } = await import('../services/notificationService');
+        if (campaign.ownerId) {
+            await createNotification(
+                campaign.ownerId,
+                'admin_action',
+                'Campaign Needs Changes',
+                `Your campaign "${campaign.title}" requires some changes before approval. Please check your email for details.`,
+                {
+                    campaignId: campaign.id,
+                    action: 'rejected',
+                }
+            );
+        }
+    } catch (error) {
+        console.error('Failed to send campaign rejection notification:', error);
+    }
+
+    // Send rejection email to campaign owner
+    try {
+        const { getUserById } = await import('./auth');
+        const { sendCampaignRejectionEmail } = await import('../services/emailService');
+        
+        const campaignOwner = await getUserById(campaign.ownerId);
+        
+        if (campaignOwner?.email) {
+            console.log('📧 Sending campaign rejection email...');
+            
+            const emailResult = await sendCampaignRejectionEmail(
+                campaignOwner.email,
+                {
+                    ownerName: campaign.ownerName,
+                    campaignTitle: campaign.title,
+                    campaignId: campaign.id,
+                    rejectionReason: rejectionReason,
+                }
+            );
+            
+            if (emailResult.success) {
+                console.log('✅ Campaign rejection email sent successfully');
+            } else {
+                console.warn('⚠️ Failed to send rejection email:', emailResult.error);
+            }
+        } else {
+            console.warn('⚠️ Could not send rejection email: Missing campaign owner email');
+        }
+    } catch (emailError) {
+        // Don't fail the rejection if email fails
+        console.error('Failed to send campaign rejection email:', emailError);
+    }
+};
+

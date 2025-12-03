@@ -202,3 +202,159 @@ export const verifyEmailConnection = async (): Promise<boolean> => {
         return false;
     }
 };
+
+/**
+ * Send campaign approval email to campaign owner
+ */
+export const sendCampaignApprovalEmail = async (
+    ownerEmail: string,
+    data: {
+        ownerName: string;
+        campaignTitle: string;
+        campaignId: string;
+        approvalMessage?: string;
+    }
+): Promise<{ success: boolean; messageId?: string; error?: string }> => {
+    try {
+        console.log(`📧 Sending campaign approval email to: ${ownerEmail}`);
+
+        const response = await fetch(`${EMAIL_BACKEND_URL}/api/send-email`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'campaign-approval',
+                to: ownerEmail,
+                data: data,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('✅ Campaign approval email sent successfully!');
+            return {
+                success: true,
+                messageId: result.messageId,
+            };
+        } else {
+            console.error('❌ Failed to send campaign approval email:', result.error);
+            return {
+                success: false,
+                error: result.error || 'Failed to send campaign approval email',
+            };
+        }
+    } catch (error: any) {
+        console.error('❌ Error sending campaign approval email:', error);
+        return {
+            success: false,
+            error: error.message || 'Failed to send campaign approval email',
+        };
+    }
+};
+
+/**
+ * Send campaign rejection email to campaign owner
+ */
+export const sendCampaignRejectionEmail = async (
+    ownerEmail: string,
+    data: {
+        ownerName: string;
+        campaignTitle: string;
+        campaignId: string;
+        rejectionReason: string;
+    }
+): Promise<{ success: boolean; messageId?: string; error?: string }> => {
+    try {
+        console.log(`📧 Sending campaign rejection email to: ${ownerEmail}`);
+
+        const response = await fetch(`${EMAIL_BACKEND_URL}/api/send-email`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'campaign-rejection',
+                to: ownerEmail,
+                data: data,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('✅ Campaign rejection email sent successfully!');
+            return {
+                success: true,
+                messageId: result.messageId,
+            };
+        } else {
+            console.error('❌ Failed to send campaign rejection email:', result.error);
+            return {
+                success: false,
+                error: result.error || 'Failed to send campaign rejection email',
+            };
+        }
+    } catch (error: any) {
+        console.error('❌ Error sending campaign rejection email:', error);
+        return {
+            success: false,
+            error: error.message || 'Failed to send campaign rejection email',
+        };
+    }
+};
+
+/**
+ * Send campaign completion email to campaign owner
+ */
+export const sendCampaignCompletionEmail = async (
+    ownerEmail: string,
+    data: {
+        ownerName: string;
+        campaignTitle: string;
+        targetAmount: number;
+        totalRaised: number;
+        donorCount: number;
+        campaignDuration?: number;
+    }
+): Promise<{ success: boolean; messageId?: string; error?: string }> => {
+    try {
+        console.log(`📧 Sending campaign completion email to: ${ownerEmail}`);
+
+        const response = await fetch(`${EMAIL_BACKEND_URL}/api/send-email`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'campaign-completion',
+                to: ownerEmail,
+                data: data,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('✅ Campaign completion email sent successfully!');
+            return {
+                success: true,
+                messageId: result.messageId,
+            };
+        } else {
+            console.error('❌ Failed to send campaign completion email:', result.error);
+            return {
+                success: false,
+                error: result.error || 'Failed to send campaign completion email',
+            };
+        }
+    } catch (error: any) {
+        console.error('❌ Error sending campaign completion email:', error);
+        return {
+            success: false,
+            error: error.message || 'Failed to send campaign completion email',
+        };
+    }
+};
+

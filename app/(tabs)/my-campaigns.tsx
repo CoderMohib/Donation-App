@@ -142,11 +142,62 @@ export default function MyCampaignsScreen() {
   };
 
   const renderCampaignActions = (campaign: Campaign) => (
-    <View className="flex-row gap-3 mt-4 px-1 mb-6">
+    <View className="flex gap-x-3 mt-4 px-1 mb-4">
+      {/* Approval Status Badge */}
+      {campaign.status === "draft" && campaign.approvalStatus && (
+        <View className="w-full mb-2">
+          <View
+            className={`rounded-full py-2 px-4 self-start ${
+              campaign.approvalStatus === "approved"
+                ? "bg-green-100"
+                : campaign.approvalStatus === "rejected"
+                  ? "bg-red-100"
+                  : "bg-yellow-100"
+            }`}
+          >
+            <Text
+              className={`text-sm font-bold ${
+                campaign.approvalStatus === "approved"
+                  ? "text-green-700"
+                  : campaign.approvalStatus === "rejected"
+                    ? "text-red-700"
+                    : "text-yellow-700"
+              }`}
+            >
+              {campaign.approvalStatus === "approved"
+                ? "✓ Approved - Ready to Start"
+                : campaign.approvalStatus === "rejected"
+                  ? "✗ Rejected - Needs Changes"
+                  : "⏳ Pending Admin Approval"}
+            </Text>
+          </View>
+          {campaign.approvalStatus === "rejected" &&
+            campaign.rejectionReason && (
+              <View className="mt-2 bg-red-50 rounded-lg p-3 border border-red-200">
+                <Text className="text-red-800 font-semibold text-sm mb-1">
+                  Reason for Rejection:
+                </Text>
+                <Text className="text-red-700 text-sm">
+                  {campaign.rejectionReason}
+                </Text>
+                <Text className="text-red-600 text-xs mt-2 italic">
+                  Please edit your campaign to address these issues.
+                </Text>
+              </View>
+            )}
+          {campaign.approvalStatus === "pending" && (
+            <Text className="text-yellow-700 text-xs mt-2">
+              Your campaign is under review. You'll be notified via email once
+              it's approved.
+            </Text>
+          )}
+        </View>
+      )}
+
       {/* Edit Button */}
       <TouchableOpacity
         onPress={() => handleEditCampaign(campaign.id)}
-        className="flex-1 bg-secondary-500 rounded-full py-3 px-4 flex-row items-center justify-center"
+        className="flex-1 bg-secondary-500 rounded-full py-3 px-4 flex-row items-center justify-center mt-2"
         style={{
           shadowColor: "#4894a8",
           shadowOffset: { width: 0, height: 4 },
@@ -160,30 +211,41 @@ export default function MyCampaignsScreen() {
         <Text className="text-white font-bold ml-2 text-base">Edit</Text>
       </TouchableOpacity>
 
-      {/* Start Button (only for drafts) */}
+      {/* Start Button (only for approved drafts) */}
       {campaign.status === "draft" && (
-        <TouchableOpacity
-          onPress={() => handleStartCampaign(campaign.id, campaign.title)}
-          className="flex-1 bg-primary-500 rounded-full py-3 px-4 flex-row items-center justify-center"
-          style={{
-            shadowColor: "#ff7a5e",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 6,
-          }}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="play-circle" size={18} color="white" />
-          <Text className="text-white font-bold ml-2 text-base">Start</Text>
-        </TouchableOpacity>
+        <>
+          {campaign.approvalStatus === "approved" ? (
+            <TouchableOpacity
+              onPress={() => handleStartCampaign(campaign.id, campaign.title)}
+              className="flex-1 bg-primary-500 rounded-full py-3 px-4 flex-row items-center justify-center mt-2"
+              style={{
+                shadowColor: "#ff7a5e",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 6,
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="play-circle" size={18} color="white" />
+              <Text className="text-white font-bold ml-2 text-base">Start</Text>
+            </TouchableOpacity>
+          ) : (
+            <View className="flex-1 bg-gray-300 rounded-full py-3 px-4 flex-row items-center justify-center opacity-60 mt-2">
+              <Ionicons name="lock-closed" size={18} color="#6b7280" />
+              <Text className="text-gray-600 font-bold ml-2 text-base">
+                {campaign.approvalStatus === "rejected" ? "Rejected" : "Locked"}
+              </Text>
+            </View>
+          )}
+        </>
       )}
 
       {/* Delete Button (only for drafts) */}
       {campaign.status === "draft" && (
         <TouchableOpacity
           onPress={() => handleDeleteCampaign(campaign.id, campaign.title)}
-          className="bg-primary-700 rounded-full py-3 px-6 flex-row items-center justify-center"
+          className="bg-primary-700 rounded-full py-3 px-6 flex-row items-center justify-center mt-2"
           style={{
             shadowColor: "#e04020",
             shadowOffset: { width: 0, height: 4 },

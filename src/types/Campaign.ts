@@ -10,6 +10,11 @@ export interface Campaign {
     ownerName: string; // Name of campaign creator
     category?: 'education' | 'health' | 'disaster' | 'community' | 'other';
     status: 'draft' | 'in_progress' | 'completed' | 'ended';
+    // Approval workflow fields (optional, for admin approval feature)
+    approvalStatus?: 'pending' | 'approved' | 'rejected';
+    approvalDate?: number;
+    approvedBy?: string; // Admin user ID
+    rejectionReason?: string;
     createdAt: number;
     updatedAt: number;
     endDate?: number;

@@ -5,8 +5,10 @@ import { DashboardLayout } from "@/src/components/layouts";
 import { FilterTabs } from "@/src/components/navigation";
 import { CampaignListSkeleton } from "@/src/components/skeletons/CampaignCardSkeleton";
 import {
+  approveCampaign,
   deleteCampaign,
   endCampaign,
+  rejectCampaign,
   startCampaign,
 } from "@/src/firebase/firestore";
 import { useAuth, useCampaigns, useToast } from "@/src/hooks";
@@ -18,8 +20,10 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Modal,
   RefreshControl,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -42,10 +46,18 @@ export default function AdminCampaignsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     visible: boolean;
-    type: "start" | "end" | "delete" | null;
+    type: "start" | "end" | "delete" | "approve" | "reject" | null;
     campaignId: string;
     campaignTitle: string;
   }>({ visible: false, type: null, campaignId: "", campaignTitle: "" });
+
+  // Rejection modal state
+  const [rejectionModal, setRejectionModal] = useState<{
+    visible: boolean;
+    campaignId: string;
+    campaignTitle: string;
+    reason: string;
+  }>({ visible: false, campaignId: "", campaignTitle: "", reason: "" });
 
   // Fetch all campaigns (no ownerId filter for admin)
   const { campaigns, loading, error, refetch } = useCampaigns({
@@ -126,6 +138,24 @@ export default function AdminCampaignsScreen() {
     });
   };
 
+  const handleApproveCampaign = (campaignId: string, title: string) => {
+    setConfirmDialog({
+      visible: true,
+      type: "approve",
+      campaignId,
+      campaignTitle: title,
+    });
+  };
+
+  const handleRejectCampaign = (campaignId: string, title: string) => {
+    setRejectionModal({
+      visible: true,
+      campaignId,
+      campaignTitle: title,
+      reason: "",
+    });
+  };
+
   const handleConfirmAction = async () => {
     const { type, campaignId } = confirmDialog;
     setConfirmDialog({
@@ -135,8 +165,11 @@ export default function AdminCampaignsScreen() {
       campaignTitle: "",
     });
 
+    if (!user) return;
+
     if (type === "start") {
-      const [, error] = await asyncHandler(startCampaign(campaignId));
+      // Admin can start any campaign (bypass approval check)
+      const [, error] = await asyncHandler(startCampaign(campaignId, true));
       if (error) {
         showError(error.message || "Failed to start campaign");
       } else {
@@ -156,6 +189,43 @@ export default function AdminCampaignsScreen() {
       } else {
         showSuccess("Campaign deleted successfully!");
       }
+    } else if (type === "approve") {
+      const [, error] = await asyncHandler(
+        approveCampaign(campaignId, user.id, "Your campaign looks great!")
+      );
+      if (error) {
+        showError(error.message || "Failed to approve campaign");
+      } else {
+        showSuccess("Campaign approved! Owner has been notified via email.");
+      }
+    }
+  };
+
+  const handleConfirmRejection = async () => {
+    const { campaignId, reason } = rejectionModal;
+
+    if (!reason.trim()) {
+      showError("Please provide a rejection reason");
+      return;
+    }
+
+    if (!user) return;
+
+    setRejectionModal({
+      visible: false,
+      campaignId: "",
+      campaignTitle: "",
+      reason: "",
+    });
+
+    const [, error] = await asyncHandler(
+      rejectCampaign(campaignId, user.id, reason)
+    );
+
+    if (error) {
+      showError(error.message || "Failed to reject campaign");
+    } else {
+      showSuccess("Campaign rejected. Owner has been notified via email.");
     }
   };
 
@@ -177,6 +247,65 @@ export default function AdminCampaignsScreen() {
 
   const renderCampaignActions = (campaign: Campaign) => (
     <View className="flex-row gap-2 mt-3 flex-wrap">
+      {/* Approval Status Badge */}
+      {campaign.approvalStatus && (
+        <View className="w-full mb-2">
+          <View
+            className={`rounded-full py-1 px-3 self-start ${
+              campaign.approvalStatus === "approved"
+                ? "bg-green-100"
+                : campaign.approvalStatus === "rejected"
+                  ? "bg-red-100"
+                  : "bg-yellow-100"
+            }`}
+          >
+            <Text
+              className={`text-xs font-semibold ${
+                campaign.approvalStatus === "approved"
+                  ? "text-green-700"
+                  : campaign.approvalStatus === "rejected"
+                    ? "text-red-700"
+                    : "text-yellow-700"
+              }`}
+            >
+              {campaign.approvalStatus === "approved"
+                ? "✓ Approved"
+                : campaign.approvalStatus === "rejected"
+                  ? "✗ Rejected"
+                  : "⏳ Pending Approval"}
+            </Text>
+          </View>
+          {campaign.approvalStatus === "rejected" &&
+            campaign.rejectionReason && (
+              <Text className="text-red-600 text-xs mt-1">
+                Reason: {campaign.rejectionReason}
+              </Text>
+            )}
+        </View>
+      )}
+
+      {/* Approve Button (only for non-approved campaigns) */}
+      {campaign.approvalStatus !== "approved" && (
+        <TouchableOpacity
+          onPress={() => handleApproveCampaign(campaign.id, campaign.title)}
+          className="bg-emerald-500 rounded-full py-2 px-3 flex-row items-center justify-center"
+        >
+          <Ionicons name="checkmark-circle" size={16} color="white" />
+          <Text className="text-white font-semibold ml-1">Approve</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Reject Button (only for non-rejected campaigns) */}
+      {campaign.approvalStatus !== "rejected" && (
+        <TouchableOpacity
+          onPress={() => handleRejectCampaign(campaign.id, campaign.title)}
+          className="bg-amber-500 rounded-full py-2 px-3 flex-row items-center justify-center"
+        >
+          <Ionicons name="close-circle" size={16} color="white" />
+          <Text className="text-white font-semibold ml-1">Reject</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Edit Button */}
       <TouchableOpacity
         onPress={() => handleEditCampaign(campaign.id)}
@@ -186,7 +315,7 @@ export default function AdminCampaignsScreen() {
         <Text className="text-white font-semibold ml-1">Edit</Text>
       </TouchableOpacity>
 
-      {/* Start Button (only for drafts) */}
+      {/* Start Button (admins can start any draft campaign) */}
       {campaign.status === "draft" && (
         <TouchableOpacity
           onPress={() => handleStartCampaign(campaign.id, campaign.title)}
@@ -316,21 +445,27 @@ export default function AdminCampaignsScreen() {
             ? "Start Campaign"
             : confirmDialog.type === "end"
               ? "End Campaign"
-              : "Delete Campaign"
+              : confirmDialog.type === "approve"
+                ? "Approve Campaign"
+                : "Delete Campaign"
         }
         message={
           confirmDialog.type === "start"
             ? `Are you sure you want to start "${confirmDialog.campaignTitle}"? Once started, it will be visible to all users.`
             : confirmDialog.type === "end"
               ? `Are you sure you want to end "${confirmDialog.campaignTitle}"? This will prevent further donations.`
-              : `Are you sure you want to delete "${confirmDialog.campaignTitle}"? This action cannot be undone.`
+              : confirmDialog.type === "approve"
+                ? `Are you sure you want to approve "${confirmDialog.campaignTitle}"? The campaign owner will be notified via email.`
+                : `Are you sure you want to delete "${confirmDialog.campaignTitle}"? This action cannot be undone.`
         }
         confirmText={
           confirmDialog.type === "start"
             ? "Start Campaign"
             : confirmDialog.type === "end"
               ? "End Campaign"
-              : "Delete Campaign"
+              : confirmDialog.type === "approve"
+                ? "Approve Campaign"
+                : "Delete Campaign"
         }
         confirmColor={confirmDialog.type === "delete" ? "danger" : "primary"}
         icon={
@@ -338,11 +473,86 @@ export default function AdminCampaignsScreen() {
             ? "rocket"
             : confirmDialog.type === "end"
               ? "stop-circle"
-              : "trash"
+              : confirmDialog.type === "approve"
+                ? "checkmark-circle"
+                : "trash"
         }
         onConfirm={handleConfirmAction}
         onCancel={handleCancelAction}
       />
+
+      {/* Rejection Modal */}
+      <Modal
+        visible={rejectionModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() =>
+          setRejectionModal({
+            visible: false,
+            campaignId: "",
+            campaignTitle: "",
+            reason: "",
+          })
+        }
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center px-4">
+          <View className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <View className="items-center mb-4">
+              <View className="bg-amber-100 rounded-full p-3 mb-3">
+                <Ionicons name="close-circle" size={32} color="#f59e0b" />
+              </View>
+              <Text className="text-xl font-bold text-gray-900 text-center">
+                Reject Campaign
+              </Text>
+              <Text className="text-gray-600 text-center mt-1">
+                "{rejectionModal.campaignTitle}"
+              </Text>
+            </View>
+
+            <Text className="text-gray-700 font-semibold mb-2">
+              Rejection Reason *
+            </Text>
+            <TextInput
+              value={rejectionModal.reason}
+              onChangeText={(text) =>
+                setRejectionModal({ ...rejectionModal, reason: text })
+              }
+              placeholder="Please provide a detailed reason for rejection..."
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              className="border border-gray-300 rounded-lg p-3 mb-4 text-gray-900"
+              style={{ minHeight: 100 }}
+            />
+
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() =>
+                  setRejectionModal({
+                    visible: false,
+                    campaignId: "",
+                    campaignTitle: "",
+                    reason: "",
+                  })
+                }
+                className="flex-1 bg-gray-200 rounded-full py-3"
+              >
+                <Text className="text-gray-700 font-semibold text-center">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleConfirmRejection}
+                className="flex-1 bg-amber-500 rounded-full py-3"
+              >
+                <Text className="text-white font-semibold text-center">
+                  Reject Campaign
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <View className=" bg-gray-50">
         {/* Search Bar */}

@@ -21,7 +21,10 @@ service cloud.firestore {
     // Helper function to check if only donation fields are being updated
     function isDonationUpdate() {
       // Allow updates to donatedAmount, updatedAt, and status (for auto-completion)
-      let allowedFields = ['donatedAmount', 'updatedAt', 'status'];
+      let allowedFields = ['donatedAmount', 'updatedAt', 'status','approvalStatus', 
+    'approvedBy',       
+    'approvalDate',  
+    'rejectionReason'];
       let changedFields = request.resource.data.diff(resource.data).affectedKeys();
       
       // Check if only allowed fields are being changed
