@@ -1,12 +1,6 @@
 import { Donation } from "@/src/types/Donation";
 import React, { useMemo, useState } from "react";
-import {
-  Dimensions,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 
 type FilterType = "day" | "month" | "year";
@@ -77,14 +71,18 @@ export const DonationChart: React.FC<DonationChartProps> = ({ donations }) => {
 
   const renderFilterButton = (type: FilterType, label: string) => (
     <TouchableOpacity
-      style={[
-        styles.filterButton,
-        filter === type && styles.activeFilterButton,
-      ]}
+      className={`flex-1 py-2 items-center rounded-md ${
+        filter === type ? "bg-white" : ""
+      }`}
+      style={filter === type ? { elevation: 1 } : {}}
       onPress={() => setFilter(type)}
     >
       <Text
-        style={[styles.filterText, filter === type && styles.activeFilterText]}
+        className={`text-sm ${
+          filter === type
+            ? "text-primary-500 font-bold"
+            : "text-gray-500 font-medium"
+        }`}
       >
         {label}
       </Text>
@@ -92,16 +90,21 @@ export const DonationChart: React.FC<DonationChartProps> = ({ donations }) => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Donation History</Text>
+    <View
+      className="bg-white rounded-2xl p-4 my-2.5 border border-gray-100"
+      style={{ elevation: 2 }}
+    >
+      <Text className="text-lg font-bold text-gray-800 mb-4">
+        Donation History
+      </Text>
 
-      <View style={styles.filterContainer}>
+      <View className="flex-row mb-5 bg-gray-100 rounded-lg p-1">
         {renderFilterButton("day", "Day")}
         {renderFilterButton("month", "Month")}
         {renderFilterButton("year", "Year")}
       </View>
 
-      <View style={styles.chartContainer}>
+      <View className="items-center justify-center" style={{ minHeight: 220 }}>
         {chartData.length > 0 ? (
           <BarChart
             data={chartData}
@@ -113,7 +116,7 @@ export const DonationChart: React.FC<DonationChartProps> = ({ donations }) => {
             yAxisThickness={0}
             xAxisThickness={0}
             isAnimated
-            height={180}
+            height={190}
             width={screenWidth - 80}
             xAxisLabelTextStyle={{ color: "#9CA3AF", fontSize: 10 }}
             yAxisTextStyle={{ color: "#9CA3AF", fontSize: 10 }}
@@ -124,8 +127,8 @@ export const DonationChart: React.FC<DonationChartProps> = ({ donations }) => {
             endSpacing={10}
           />
         ) : (
-          <View style={styles.noDataContainer}>
-            <Text style={styles.noDataText}>
+          <View className="h-[200px] justify-center items-center">
+            <Text className="text-gray-400 text-sm">
               No donation data available for this period.
             </Text>
           </View>
@@ -134,69 +137,3 @@ export const DonationChart: React.FC<DonationChartProps> = ({ donations }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 16,
-    marginVertical: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 16,
-    color: "#1F2937",
-  },
-  filterContainer: {
-    flexDirection: "row",
-    marginBottom: 20,
-    backgroundColor: "#F3F4F6",
-    borderRadius: 8,
-    padding: 4,
-  },
-  filterButton: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: "center",
-    borderRadius: 6,
-  },
-  activeFilterButton: {
-    backgroundColor: "white",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  filterText: {
-    fontSize: 14,
-    color: "#6B7280",
-    fontWeight: "500",
-  },
-  activeFilterText: {
-    color: "#ff7a5e",
-    fontWeight: "bold",
-  },
-  chartContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 220,
-  },
-  noDataContainer: {
-    height: 200,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  noDataText: {
-    color: "#9CA3AF",
-    fontSize: 14,
-  },
-});
