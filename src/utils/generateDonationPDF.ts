@@ -1,7 +1,5 @@
 import { Donation } from '@/src/types/Donation';
 import { User } from '@/src/types/User';
-import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
@@ -95,12 +93,7 @@ const generateHTMLTemplate = (options: PDFOptions): string => {
             text-align: center;
           }
           
-          .header .logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            display: block;
-          }
+
           
           .header h1 {
             font-size: 32px;
@@ -246,7 +239,6 @@ const generateHTMLTemplate = (options: PDFOptions): string => {
       <body>
         <div class="container">
           <div class="header">
-            <img src="{{LOGO_BASE64}}" alt="App Logo" class="logo" />
             <h1>Donation Statement</h1>
             <p>${periodLabel}</p>
           </div>
@@ -327,19 +319,8 @@ export const generateDonationPDF = async (
   options: PDFOptions
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Load logo as base64
-    const logoAsset = Asset.fromModule(require('@/assets/app_logo.png'));
-    await logoAsset.downloadAsync();
-    const logoBase64 = await FileSystem.readAsStringAsync(logoAsset.localUri!, {
-      encoding: 'base64',
-    });
-    const logoDataUri = `data:image/png;base64,${logoBase64}`;
-
     // Generate HTML content
-    let htmlContent = generateHTMLTemplate(options);
-    
-    // Replace logo placeholder with actual base64 data
-    htmlContent = htmlContent.replace('{{LOGO_BASE64}}', logoDataUri);
+    const htmlContent = generateHTMLTemplate(options);
 
     // Create PDF using expo-print
     const { uri } = await Print.printToFileAsync({
