@@ -16,6 +16,7 @@ A **production-ready** donation platform built with **Expo Router**, **NativeWin
 ![EAS Build](https://img.shields.io/badge/EAS_Build-000020?style=for-the-badge&logo=expo&logoColor=white)
 
 **Core Technologies:**
+
 - **Expo SDK 54** - React Native framework for cross-platform development
 - **TypeScript** - Type-safe JavaScript for better code quality
 - **Firebase** - Backend-as-a-Service (Authentication, Firestore, Storage)
@@ -31,6 +32,7 @@ A **production-ready** donation platform built with **Expo Router**, **NativeWin
 ## ✨ Key Features
 
 ### User Features
+
 - 🔐 **Complete Authentication** - Login, Signup with email verification and password reset
 - 💳 **Donation System** - Make donations with custom amounts, messages, and anonymous option
 - 📊 **Campaign Management** - Browse, search, filter, view details, and track progress in real-time
@@ -38,14 +40,19 @@ A **production-ready** donation platform built with **Expo Router**, **NativeWin
 - 👤 **User Profiles** - View donation history, stats, and manage campaigns
 - 🔔 **Push Notifications** - Receive real-time notifications for donations and campaign updates
 - 🔄 **Real-time Updates** - Live campaign progress and donation tracking
+- 📧 **Email Notifications** - Receive email notifications for donations and campaign updates
+- 📄 **PDF Export** - Generate and download donation e-statements (day/month/year)
 - 🎨 **Modern UI/UX** - Gradients, animations, floating labels, and smooth transitions
 - 📱 **Fully Responsive** - Works seamlessly on iOS, Android, and Web
 - ♿ **Accessible** - Screen reader support and accessibility features
 
 ### Admin Features
-- 📈 **Admin Dashboard** - Comprehensive statistics and analytics
+
+- 📈 **Admin Dashboard** - Comprehensive statistics and analytics with interactive charts
+- 📊 **Analytics Charts** - Donation trends, campaign performance, user growth, and revenue charts
+- ✅ **Campaign Approval** - Approve or reject campaigns with email notifications
 - 👥 **User Management** - View all users, promote to admin, manage roles
-- 🎯 **Campaign Management** - View, edit, delete, and end campaigns
+- 🎯 **Campaign Management** - View, edit, delete, start, and end campaigns
 - 💰 **Donations Overview** - Monitor all donations across the platform
 - 🔐 **Role-Based Access Control** - Secure admin-only features
 
@@ -221,11 +228,13 @@ Donation-App/
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Setup Firebase
+
 1. Create Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
 2. Enable Authentication (Email/Password)
 3. Create Firestore Database
@@ -242,6 +251,7 @@ EXPO_PUBLIC_FIREBASE_APP_ID=your-app-id
 ```
 
 ### 3. Setup Cloudinary (Image Uploads)
+
 1. Create a free account at [cloudinary.com](https://cloudinary.com)
 2. Go to Dashboard → Settings → Upload
 3. Create an **Upload Preset**:
@@ -257,11 +267,13 @@ EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=donation-app-uploads
 ```
 
 **Note**: Cloudinary is used for:
+
 - Campaign image uploads (stored in `donation-app/campaigns/{campaignId}/`)
 - Profile picture uploads (stored in `donation-app/profiles/{userId}/`)
 - Automatic image optimization and CDN delivery
 
 ### 4. Run the App
+
 ```bash
 npm start
 # Press 'a' for Android, 'i' for iOS, 'w' for Web
@@ -272,6 +284,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 ## 📱 Application Flow
 
 ### Authentication Flow
+
 1. **App Launch** → Check authentication state
 2. **Not Authenticated** → Redirect to Login
 3. **Sign Up** → Create account → Email verification required
@@ -280,6 +293,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 6. **Password Reset** → Send reset email → Update password
 
 ### User Flow
+
 1. **Home Tab** → Browse active campaigns → Random order for discovery
 2. **Explore Tab** → Search and filter campaigns by category
 3. **Campaign Details** → View full details, progress, recent donations
@@ -289,19 +303,30 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 7. **Profile** → View stats, manage account, quick actions
 
 ### Admin Flow
-1. **Admin Dashboard** → View platform statistics
+
+1. **Admin Dashboard** → View platform statistics and analytics charts
+   - Donation Trend Chart (30-day line chart)
+   - Campaign Performance Chart (top 5 by revenue)
+   - User Growth Chart (6-month bar chart)
+   - Donation Status Chart (pie chart)
+   - Monthly Revenue Chart (bar chart)
 2. **Users Management** → View all users → Promote to admin
-3. **Campaigns Management** → View all campaigns → Edit/Delete/End campaigns
+3. **Campaigns Management** → View all campaigns → Approve/Reject/Edit/Delete/End
 4. **Donations Overview** → View all donations across platform
 5. **Profile** → Admin profile management
 
 ### Campaign Lifecycle
+
 1. **Draft** → Campaign created but not active
-2. **In Progress** → Campaign active, accepting donations
-3. **Completed** → Goal reached automatically
-4. **Ended** → Manually ended by admin
+2. **Pending Approval** → Submitted for admin review
+3. **Approved** → Admin approved, ready to start
+4. **Rejected** → Admin rejected with reason (can edit and resubmit)
+5. **In Progress** → Campaign active, accepting donations
+6. **Completed** → Goal reached automatically
+7. **Ended** → Manually ended by admin
 
 ### Donation Flow
+
 1. **Select Campaign** → Navigate to campaign details
 2. **Donate Button** → Navigate to donation form
 3. **Enter Details** → Amount, message (optional), anonymous option
@@ -315,6 +340,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 ## 🛠️ Technical Architecture
 
 ### Framework & Routing
+
 - **Expo SDK 54** - React Native framework
 - **Expo Router** - File-based routing system
   - Automatic route generation from file structure
@@ -323,6 +349,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
   - Type-safe navigation with TypeScript
 
 ### State Management
+
 - **React Hooks** - useState, useEffect, useContext
 - **Custom Hooks** - Encapsulated business logic
   - `useAuth` - Authentication state management
@@ -335,6 +362,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 ### Firebase Integration
 
 #### Authentication
+
 - **Firebase Auth** with AsyncStorage persistence
 - Email/Password authentication
 - Email verification system
@@ -342,6 +370,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 - Role-based access (user/admin)
 
 #### Firestore Database
+
 - **Real-time Subscriptions** - `onSnapshot` for live updates
 - **Transactions** - Atomic operations for donations
 - **Queries** - Filtered and sorted data retrieval
@@ -352,6 +381,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
   - `notifications` - User notifications
 
 #### Storage
+
 - **Cloudinary** - Image upload and CDN service
   - Campaign image uploads
   - Profile picture uploads
@@ -361,11 +391,13 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 - **Firebase Storage** - Alternative storage option (optional)
 
 ### Styling
+
 - **NativeWind** - Tailwind CSS for React Native
 - **Tailwind CSS** - Utility-first CSS framework
 - **Responsive Design** - Mobile-first approach
 
 ### Type Safety
+
 - **TypeScript** - Full type coverage
 - **Type Definitions** - Interfaces for all data models
 - **Type Exports** - Centralized type management
@@ -373,6 +405,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 ## 🔥 Firebase Collections
 
 ### users
+
 ```typescript
 {
   id: string;                    // Firebase Auth UID
@@ -390,6 +423,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 ```
 
 ### campaigns
+
 ```typescript
 {
   id: string;                     // Campaign ID
@@ -410,6 +444,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 ```
 
 ### donations
+
 ```typescript
 {
   id: string;                     // Donation ID
@@ -429,6 +464,7 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md)
 ```
 
 ### notifications
+
 ```typescript
 {
   id: string;                     // Notification ID
@@ -454,9 +490,11 @@ The app features a comprehensive notification system that includes both in-app n
 ### Notification Architecture
 
 #### Push Notification Registration
+
 The app registers devices for push notifications using Expo's notification service:
 
 **Service**: `src/services/notifications.ts`
+
 - `registerForPushNotifications(userId: string)` - Registers device and saves Expo push token to Firestore
   - Requests notification permissions
   - Creates Android notification channel (`default`)
@@ -464,6 +502,7 @@ The app registers devices for push notifications using Expo's notification servi
   - Saves token to user document in Firestore (`users/{userId}/pushToken`)
 
 **Configuration**:
+
 - Android notification channel: `default`
   - Importance: `MAX`
   - Vibration pattern: `[0, 250, 250, 250]`
@@ -493,6 +532,7 @@ The app registers devices for push notifications using Expo's notification servi
 **Service**: `src/services/notificationService.ts`
 
 #### Create Notification
+
 ```typescript
 createNotification(
   userId: string,
@@ -507,49 +547,63 @@ createNotification(
   }
 ): Promise<string>
 ```
+
 Creates a notification document in Firestore `notifications` collection.
 
 #### Mark as Read
+
 ```typescript
 markNotificationAsRead(notificationId: string): Promise<void>
 ```
+
 Marks a single notification as read.
 
 #### Mark All as Read
+
 ```typescript
 markAllAsRead(userId: string): Promise<void>
 ```
+
 Marks all unread notifications for a user as read.
 
 #### Delete Notification
+
 ```typescript
 deleteNotification(notificationId: string): Promise<void>
 ```
+
 Deletes a notification from Firestore.
 
 #### Get User Notifications
+
 ```typescript
 getUserNotifications(userId: string, limitCount?: number): Promise<AppNotification[]>
 ```
+
 Retrieves user's notifications with pagination (default limit: 50).
 
 #### Get Unread Count
+
 ```typescript
 getUnreadCount(userId: string): Promise<number>
 ```
+
 Returns the count of unread notifications for a user.
 
 ### Notification Hooks
 
 #### useNotifications
+
 **Location**: `src/hooks/useNotifications.ts`
 
 Handles push notification registration and navigation:
+
 ```typescript
 const { expoPushToken, notification } = useNotifications();
 ```
 
 **Features**:
+
 - Automatically registers for push notifications when user logs in
 - Listens for notifications received while app is in foreground
 - Handles notification taps and navigates to relevant screens
@@ -557,9 +611,11 @@ const { expoPushToken, notification } = useNotifications();
   - If `data.donationId` exists → navigates to `/my-donations`
 
 #### useUserNotifications
+
 **Location**: `src/hooks/useUserNotifications.ts`
 
 Manages user's in-app notifications:
+
 ```typescript
 const {
   notifications,
@@ -567,11 +623,12 @@ const {
   loading,
   markAsRead,
   markAllAsRead,
-  deleteNotification
+  deleteNotification,
 } = useUserNotifications(userId);
 ```
 
 **Features**:
+
 - Real-time subscription to user's notifications
 - Automatic unread count calculation
 - Methods to mark notifications as read (single/all)
@@ -580,9 +637,11 @@ const {
 ### Notification Components
 
 #### NotificationBell
+
 **Location**: `src/components/notifications/NotificationBell.tsx`
 
 Displays notification bell icon with unread count badge:
+
 - Shows unread count badge (red circle with number)
 - Badge shows "9+" if count exceeds 9
 - Navigates to `/notifications` on press
@@ -593,7 +652,9 @@ Displays notification bell icon with unread count badge:
 Notifications are automatically created in the following scenarios:
 
 #### 1. Campaign Started
+
 **Trigger**: When a campaign status changes from `draft` to `in_progress`
+
 - **Type**: `campaign_update`
 - **Recipient**: Campaign owner
 - **Title**: "Campaign Started! 🚀"
@@ -601,7 +662,9 @@ Notifications are automatically created in the following scenarios:
 - **Data**: `{ campaignId: string }`
 
 #### 2. Campaign Ended
+
 **Trigger**: When an admin manually ends a campaign
+
 - **Type**: `admin_action`
 - **Recipient**: Campaign owner
 - **Title**: "Campaign Ended"
@@ -609,7 +672,9 @@ Notifications are automatically created in the following scenarios:
 - **Data**: `{ campaignId: string, action: 'ended' }`
 
 #### 3. Goal Reached (100%)
+
 **Trigger**: When campaign `donatedAmount >= targetAmount` and status is `in_progress`
+
 - **Type**: `milestone`
 - **Recipient**: Campaign owner
 - **Title**: "Goal Reached! 🎯"
@@ -617,9 +682,11 @@ Notifications are automatically created in the following scenarios:
 - **Data**: `{ campaignId: string }`
 
 #### 4. New Donation Received
+
 **Trigger**: When a donation is successfully created
+
 - **Type**: `donation`
-- **Recipients**: 
+- **Recipients**:
   - Campaign owner
   - Donor
 - **To Campaign Owner**:
@@ -632,7 +699,9 @@ Notifications are automatically created in the following scenarios:
   - **Data**: `{ campaignId: string, donationId: string }`
 
 #### 5. Milestone Reached (25%, 50%, 75%)
+
 **Trigger**: When a donation causes campaign to cross a milestone threshold
+
 - **Type**: `milestone`
 - **Recipient**: Campaign owner
 - **Title**: "Milestone Reached! 🎉"
@@ -641,7 +710,9 @@ Notifications are automatically created in the following scenarios:
 - **Milestones**: 25%, 50%, 75% of target amount
 
 #### 6. User Promoted to Admin
+
 **Trigger**: When an admin promotes a user to admin role
+
 - **Type**: `admin_action`
 - **Recipient**: Promoted user
 - **Title**: "Admin Access Granted"
@@ -668,6 +739,7 @@ When sending push notifications via Expo Push API, use this format:
 ```
 
 **Important Notes**:
+
 - Use `channelId: "default"` for Android notifications
 - Include `campaignId` or `donationId` in `data` for navigation
 - Get push token from `users/{userId}/pushToken` in Firestore
@@ -682,6 +754,7 @@ The app automatically navigates users when they tap on notifications:
 - **Update notifications** (`data.updateId` exists) → `/campaign/{campaignId}` (future feature)
 
 Navigation is handled in:
+
 - `useNotifications` hook - For push notifications
 - `app/notifications.tsx` - For in-app notification list
 
@@ -690,12 +763,283 @@ Navigation is handled in:
 **Location**: `app/notifications.tsx`
 
 Features:
+
 - Real-time list of user's notifications
 - Unread/read status indicators
 - Tap to navigate to related content
 - Mark as read on tap
 - Sorted by creation date (newest first)
 - Empty state when no notifications
+
+## 📧 Email Notification System
+
+The app features a comprehensive email notification system powered by an Express.js backend with Brevo (formerly Sendinblue) SMTP.
+
+### Email Service Architecture
+
+**Service**: `src/services/emailService.ts`
+
+The email service communicates with an external Express.js backend that handles email sending through Nodemailer with Brevo SMTP.
+
+### Email Types
+
+#### 1. Donation Notification Email
+
+**Recipient**: Campaign Owner
+
+```typescript
+sendDonationNotificationEmail(campaignOwnerEmail, {
+    campaignOwnerName: string;
+    campaignTitle: string;
+    donorName: string;
+    amount: number;
+    message?: string;
+    isAnonymous: boolean;
+    campaignId: string;
+    totalRaised: number;
+    targetAmount: number;
+})
+```
+
+#### 2. Thank You Email
+
+**Recipient**: Donor
+
+```typescript
+sendThankYouEmail(donorEmail, {
+    donorName: string;
+    campaignTitle: string;
+    campaignOwnerName: string;
+    amount: number;
+    message?: string;
+    campaignId: string;
+    isAnonymous: boolean;
+})
+```
+
+#### 3. Campaign Approval Email
+
+**Recipient**: Campaign Owner
+
+```typescript
+sendCampaignApprovalEmail(ownerEmail, {
+    ownerName: string;
+    campaignTitle: string;
+    campaignId: string;
+    approvalMessage?: string;
+})
+```
+
+#### 4. Campaign Rejection Email
+
+**Recipient**: Campaign Owner
+
+```typescript
+sendCampaignRejectionEmail(ownerEmail, {
+    ownerName: string;
+    campaignTitle: string;
+    campaignId: string;
+    rejectionReason: string;
+})
+```
+
+#### 5. Campaign Completion Email
+
+**Recipient**: Campaign Owner
+
+```typescript
+sendCampaignCompletionEmail(ownerEmail, {
+    ownerName: string;
+    campaignTitle: string;
+    targetAmount: number;
+    totalRaised: number;
+    donorCount: number;
+    campaignDuration?: number;
+})
+```
+
+### Email Backend Configuration
+
+The email service requires an Express.js backend running with the following environment variable:
+
+```env
+EXPO_PUBLIC_EMAIL_BACKEND_URL=https://your-backend-url.com
+```
+
+The backend should expose the following endpoints:
+
+- `POST /api/send-email` - Send individual emails
+- `POST /api/send-donation-emails` - Send both notification and thank you emails
+- `GET /api/health` - Health check endpoint
+
+## 📊 Admin Dashboard Charts
+
+The admin dashboard features interactive analytics charts powered by `react-native-gifted-charts`.
+
+### Chart Data Hook
+
+**Location**: `src/hooks/useAdminChartData.ts`
+
+```typescript
+const { chartData, loading, error, refresh } = useAdminChartData(timeRange);
+```
+
+Returns processed data for all chart types with configurable time range (default: 30 days).
+
+### Chart Data Processors
+
+**Location**: `src/utils/chartDataProcessors.ts`
+
+#### 1. Donation Trend Data
+
+```typescript
+processDonationTrendData(donations, (days = 30));
+```
+
+- Aggregates donations by date over specified period
+- Returns daily totals for line chart visualization
+- Filters only completed donations
+
+#### 2. Campaign Performance Data
+
+```typescript
+processCampaignPerformanceData(donations, campaigns, (limit = 5));
+```
+
+- Identifies top performing campaigns by revenue
+- Returns campaign names, revenue, and donation counts
+- Sorted by highest revenue
+
+#### 3. User Growth Data
+
+```typescript
+processUserGrowthData(users, (months = 6));
+```
+
+- Tracks new user registrations over time
+- Returns monthly totals for bar chart
+- Shows growth trends
+
+#### 4. Donation Status Data
+
+```typescript
+processDonationStatusData(donations);
+```
+
+- Categorizes donations by status (completed/pending/failed)
+- Returns percentages for pie chart
+- Color-coded for visual distinction
+
+#### 5. Monthly Revenue Data
+
+```typescript
+processMonthlyRevenueData(donations);
+```
+
+- Aggregates revenue by month for current year
+- Highlights current month
+- Returns data for bar chart
+
+### Chart Components
+
+**Location**: `src/components/admin/AdminDashboardCharts.tsx`
+
+| Component                  | Type       | Description                      |
+| -------------------------- | ---------- | -------------------------------- |
+| `DonationTrendChart`       | Line Chart | 30-day donation trends           |
+| `CampaignPerformanceChart` | Bar Chart  | Top 5 campaigns by revenue       |
+| `UserGrowthChart`          | Bar Chart  | 6-month user registration trends |
+| `DonationStatusChart`      | Pie Chart  | Donation status distribution     |
+| `MonthlyRevenueChart`      | Bar Chart  | Monthly revenue for current year |
+
+## 📄 PDF Export (Donation E-Statements)
+
+Users can generate and export PDF donation statements from the My Donations screen.
+
+### PDF Generation
+
+**Location**: `src/utils/generateDonationPDF.ts`
+
+```typescript
+generateDonationPDF({
+    donations: Donation[];
+    user: User;
+    filter: 'day' | 'month' | 'year';
+    periodLabel: string;
+})
+```
+
+### Features
+
+- **Filtering Options**: Day, Month, or Year aggregation
+- **Professional Template**: HTML-based template with styling
+- **User Information**: Includes donor name, email, and statistics
+- **Donation Details**: Lists all donations with amounts, dates, and campaigns
+- **Summary Statistics**: Total donated, number of donations
+- **Share Functionality**: Uses `expo-sharing` to share the generated PDF
+
+### Donation Chart Component
+
+**Location**: `src/components/DonationChart.tsx`
+
+The `DonationChart` component displays donation history as a bar chart and includes:
+
+- Filter tabs for Day/Month/Year views
+- Export PDF button with loading state
+- Interactive bar chart with tooltips
+- Empty state handling
+
+### Technical Implementation
+
+1. **HTML Template Generation**: Creates styled HTML with donation data
+2. **PDF Conversion**: Uses `expo-print` to convert HTML to PDF
+3. **File Saving**: Saves PDF to device using `expo-file-system`
+4. **Sharing**: Opens share dialog using `expo-sharing`
+
+## ✅ Campaign Approval Workflow
+
+Admins can approve or reject campaigns before they go live.
+
+### Approval Process
+
+1. **Campaign Creation**: User creates campaign (status: `draft`)
+2. **Admin Review**: Admin views campaign in Campaigns Management
+3. **Approval Decision**:
+   - **Approve**: Sets `approvalStatus` to `approved`, sends approval email
+   - **Reject**: Opens modal for rejection reason, sets `approvalStatus` to `rejected`, sends rejection email
+
+### Campaign Model Updates
+
+```typescript
+interface Campaign {
+  // ... existing fields
+  approvalStatus?: "pending" | "approved" | "rejected";
+  approvedBy?: string;
+  approvedAt?: number;
+  rejectedBy?: string;
+  rejectedAt?: number;
+  rejectionReason?: string;
+}
+```
+
+### Firestore Functions
+
+```typescript
+// Approve a campaign
+approveCampaign(campaignId: string, adminId: string, message?: string)
+
+// Reject a campaign
+rejectCampaign(campaignId: string, adminId: string, reason: string)
+```
+
+### Admin UI Features
+
+**Location**: `app/(admin)/campaigns.tsx`
+
+- **Approval Status Badge**: Shows pending/approved/rejected status
+- **Approve Button**: Opens confirmation dialog
+- **Reject Button**: Opens modal for rejection reason input
+- **Email Notifications**: Automatic emails sent on approval/rejection
 
 ## 🔒 Firestore Security Rules
 
@@ -710,19 +1054,19 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     // Helper function to check if user owns the document
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-    
+
     // Helper function to check if user is admin
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
+
     // Users collection
     match /users/{userId} {
       allow read: if isAuthenticated();
@@ -732,19 +1076,19 @@ service cloud.firestore {
       // Users can delete their own account OR admins can delete any user (except themselves)
       allow delete: if (isOwner(userId) || isAdmin()) && request.auth.uid != userId;
     }
-    
+
     // Campaigns collection
     match /campaigns/{campaignId} {
       allow read: if true; // Anyone can read campaigns
       allow create: if isAuthenticated();
       // Campaign owner or admin can update
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                       (isOwner(resource.data.ownerId) || isAdmin());
       // Campaign owner or admin can delete
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
                       (isOwner(resource.data.ownerId) || isAdmin());
     }
-    
+
     // Donations collection
     match /donations/{donationId} {
       allow read: if isAuthenticated();
@@ -757,6 +1101,7 @@ service cloud.firestore {
 ```
 
 **Key Security Features**:
+
 - ✅ Authentication required for most operations
 - ✅ Users can only modify their own data
 - ✅ Admins have elevated permissions
@@ -770,7 +1115,9 @@ The following composite indexes are required for optimal query performance. Thes
 ### Required Indexes
 
 #### 1. Donations Collection
+
 **Index ID**: `CICAgJim14AK`
+
 - **Collection**: `donations`
 - **Fields Indexed**:
   - `campaignId` (Ascending)
@@ -781,7 +1128,9 @@ The following composite indexes are required for optimal query performance. Thes
 - **Used For**: Querying donations by campaign with date sorting
 
 #### 2. Campaigns Collection - Status Filter
+
 **Index ID**: `CICAgOjXh4EK`
+
 - **Collection**: `campaigns`
 - **Fields Indexed**:
   - `status` (Ascending)
@@ -792,7 +1141,9 @@ The following composite indexes are required for optimal query performance. Thes
 - **Used For**: Filtering campaigns by status (e.g., active campaigns)
 
 #### 3. Campaigns Collection - Owner Filter
+
 **Index ID**: `CICAgJiUpoMK`
+
 - **Collection**: `campaigns`
 - **Fields Indexed**:
   - `ownerId` (Ascending)
@@ -803,7 +1154,9 @@ The following composite indexes are required for optimal query performance. Thes
 - **Used For**: Querying user's own campaigns
 
 #### 4. Donations Collection - Donor Filter
+
 **Index ID**: `CICAgJiUsZIK`
+
 - **Collection**: `donations`
 - **Fields Indexed**:
   - `donorId` (Ascending)
@@ -835,49 +1188,60 @@ The following composite indexes are required for optimal query performance. Thes
 ## 📦 Component Architecture
 
 ### Buttons
+
 - **PrimaryButton** - Main action button with gradient variants (primary/success/danger)
 - **SecondaryButton** - Secondary/outline button for less prominent actions
 
 ### Cards
+
 - **CampaignCard** - Campaign display with progress bar, image, and quick actions
 - **DonationCard** - Donation history item with details
 
 ### Forms
+
 - **CampaignForm** - Complete campaign creation/edit form with image upload
 
 ### Feedback Components
+
 - **Toast** - Toast notification system with success/error variants
 - **ProgressBar** - Progress indicator for campaigns
 - **StatusBadge** - Status badge for campaigns (draft/in_progress/completed/ended)
 - **ConfirmDialog** - Confirmation dialog for destructive actions
 
 ### Inputs
+
 - **TextInput** - Text input with floating label, validation, and error handling
 - **PasswordInput** - Password input with show/hide toggle and validation
 - **SearchBar** - Search input component with icon
 
 ### Layouts
+
 - **AuthLayout** - Authentication screen layout with background image and form card
 - **DashboardLayout** - Dashboard screen layout with header, title, and navigation
 
 ### Navigation
+
 - **FilterTabs** - Category filter tabs for campaigns
 - **ProfileDropdown** - Profile dropdown menu with navigation options
 
 ### Notifications
+
 - **NotificationBell** - Notification bell icon with badge count
 
 ### Profile
+
 - **ProfileHeader** - Profile header with user info and stats
 - **QuickActions** - Quick action buttons for profile
 - **UserCampaignsSection** - User's campaigns list section
 
 ### Skeletons
+
 - **CampaignCardSkeleton** - Loading skeleton for campaign cards
 
 ## 🎨 Design System
 
 ### Colors
+
 - **Primary**: #ff7a5e (Peachy Pink)
 - **Secondary**: #4894a8 (Teal)
 - **Success**: #10B981 (Green)
@@ -885,6 +1249,7 @@ The following composite indexes are required for optimal query performance. Thes
 - **Warning**: #F59E0B (Yellow)
 
 ### Usage Example
+
 ```tsx
 import { TextInput } from '@/src/components/inputs';
 import { PrimaryButton } from '@/src/components/buttons';
@@ -914,12 +1279,14 @@ import { CampaignCard } from '@/src/components/cards';
 ## 🗺️ Routing Structure
 
 ### Authentication Routes
+
 - `/login` - Login screen
 - `/signup` - Signup screen
 - `/email-verification` - Email verification screen
 - `/forgot-password` - Password reset screen
 
 ### User Tab Routes (/(tabs))
+
 - `/` or `/(tabs)` - Home (active campaigns)
 - `/(tabs)/explore` - Explore campaigns with search
 - `/(tabs)/create-campaign` - Create new campaign
@@ -928,6 +1295,7 @@ import { CampaignCard } from '@/src/components/cards';
 - `/(tabs)/profile` - User profile
 
 ### Admin Tab Routes (/(admin))
+
 - `/(admin)/dashboard` - Admin dashboard
 - `/(admin)/campaigns` - Manage campaigns
 - `/(admin)/users` - Manage users
@@ -935,59 +1303,75 @@ import { CampaignCard } from '@/src/components/cards';
 - `/(admin)/profile` - Admin profile
 
 ### Dynamic Routes
+
 - `/campaign/[id]` - Campaign details
 - `/campaign/edit/[id]` - Edit campaign
 - `/donate/[campaignId]` - Donation form
 
 ### Other Routes
+
 - `/settings` - App settings
 - `/notifications` - Notifications list
 
 ## 🔧 Custom Hooks
 
 ### useAuth
+
 Manages authentication state and user data
+
 ```typescript
 const { user, isLoading, isAuthenticated } = useAuth();
 ```
 
 ### useCampaign
+
 Manages single campaign state with real-time updates
+
 ```typescript
 const { campaign, loading, error } = useCampaign(campaignId);
 ```
 
 ### useCampaigns
+
 Manages campaigns list with filters and real-time updates
+
 ```typescript
 const { campaigns, loading, error } = useCampaigns({
-  status: 'in_progress',
-  category: 'education'
+  status: "in_progress",
+  category: "education",
 });
 ```
 
 ### useDonations
+
 Manages donations with filtering options
+
 ```typescript
 const { donations, loading, error } = useDonations({
-  campaignId: 'xxx',
-  userId: 'yyy'
+  campaignId: "xxx",
+  userId: "yyy",
 });
 ```
 
 ### useNotifications
+
 Handles push notifications registration and navigation
+
 ```typescript
 const { expoPushToken, notification } = useNotifications();
 ```
+
 **Features**:
+
 - Automatically registers device for push notifications
 - Saves Expo push token to Firestore
 - Listens for foreground notifications
 - Handles notification tap navigation
 
 ### useUserNotifications
+
 Manages user's in-app notifications with real-time updates
+
 ```typescript
 const {
   notifications,
@@ -995,23 +1379,29 @@ const {
   loading,
   markAsRead,
   markAllAsRead,
-  deleteNotification
+  deleteNotification,
 } = useUserNotifications(userId);
 ```
+
 **Features**:
+
 - Real-time subscription to notifications
 - Automatic unread count calculation
 - Mark notifications as read (single/all)
 - Delete notifications
 
 ### useToast
+
 Manages toast notification state
+
 ```typescript
 const { toast, showSuccess, showError, hideToast } = useToast();
 ```
 
 ### useEmailVerification
+
 Manages email verification flow
+
 ```typescript
 const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 ```
@@ -1019,11 +1409,13 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 ## 🛠️ Utility Functions
 
 ### Validators
+
 - `validateEmail(email: string)` - Email validation
 - `validatePassword(password: string)` - Password strength validation
 - `validateAmount(amount: string)` - Donation amount validation
 
 ### Formatters
+
 - `formatCurrency(amount: number)` - Currency formatting
 - `formatDate(timestamp: number)` - Date formatting
 - `formatFirebaseError(error: any)` - Firebase error formatting
@@ -1031,9 +1423,11 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 - `calculateDaysRemaining(endDate: number)` - Days remaining calculation
 
 ### Async Handlers
+
 - `asyncHandler<T>(promise: Promise<T>)` - Async error handling wrapper
 
 ### Image Helpers
+
 - `getCloudinaryUrl(publicId, cloudName, options?)` - Generate Cloudinary URL with transformations
   - Supports width, height, crop, quality, and format options
   - Example: `getCloudinaryUrl('image-id', 'cloud-name', { width: 400, quality: 'auto' })`
@@ -1042,6 +1436,7 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 ## 👨‍💼 Admin Features
 
 ### Admin Dashboard
+
 - **Statistics Overview**:
   - Total Users count
   - Total Campaigns count
@@ -1051,12 +1446,14 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 - **Quick Actions** - Quick navigation to management screens
 
 ### User Management
+
 - View all registered users
 - View user statistics (donations, campaigns)
 - Promote users to admin role
 - User role management
 
 ### Campaign Management
+
 - View all campaigns (all statuses)
 - Edit any campaign
 - Delete campaigns
@@ -1064,12 +1461,14 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 - Filter by status and category
 
 ### Donations Overview
+
 - View all donations across platform
 - Filter by campaign, user, date
 - View donation details and messages
 - Monitor donation trends
 
 ### Role-Based Access Control
+
 - Automatic routing based on user role
 - Admin-only routes protected
 - Firestore security rules enforce permissions
@@ -1078,6 +1477,7 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 ## 📚 Firebase Services
 
 ### Authentication (src/firebase/auth.ts)
+
 - `signUp(email, password, name)` - Create new user account
 - `signIn(email, password)` - Sign in existing user
 - `logOut()` - Sign out current user
@@ -1094,6 +1494,7 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 ### Firestore (src/firebase/firestore.ts)
 
 #### Campaigns
+
 - `createCampaign(campaignData)` - Create new campaign
 - `getCampaign(campaignId)` - Get single campaign
 - `getCampaigns(filters?)` - Get campaigns with filters
@@ -1107,6 +1508,7 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 - `subscribeToCampaigns(callback, filters?)` - Real-time campaigns list
 
 #### Donations
+
 - `createDonation(donationData)` - Create donation (transaction-based)
 - `getCampaignDonations(campaignId, limit?)` - Get campaign donations
 - `getUserDonations(userId, limit?)` - Get user donations
@@ -1114,41 +1516,45 @@ const { isVerified, checkVerification, resendEmail } = useEmailVerification();
 - `subscribeToDonations(campaignId, callback, limit?)` - Real-time donations
 
 #### User Statistics
+
 - `updateUserDonationStats(userId, amount)` - Update donation stats
 - `updateUserCampaignStats(userId, incrementBy)` - Update campaign stats
 
 ### Storage (src/firebase/storage.ts)
 
 #### Cloudinary Image Upload
+
 The app uses **Cloudinary** for image uploads and CDN delivery. All image uploads are handled client-side using unsigned upload presets.
 
 **Functions**:
+
 - `uploadImage(uri: string, folder: string)` - Generic image upload function
   - Uploads image to Cloudinary
   - Returns secure URL for the uploaded image
   - Handles errors and network issues
-  
 - `uploadProfilePicture(userId: string, imageUri: string)` - Upload user profile picture
   - Stores in: `donation-app/profiles/{userId}/`
   - Returns secure URL for profile image
-  
 - `uploadCampaignImage(campaignId: string, imageUri: string)` - Upload campaign image
   - Stores in: `donation-app/campaigns/{campaignId}/`
   - Returns secure URL for campaign image
 
 **Configuration**:
+
 - Requires `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME` in `.env`
 - Requires `EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET` in `.env`
 - Upload preset must be set to **Unsigned** mode
 
 **Image Helpers** (src/utils/imageHelpers.ts):
+
 - `getCloudinaryUrl(publicId, cloudName, options?)` - Generate Cloudinary URL with transformations
   - Supports width, height, crop, quality, and format options
   - Useful for responsive images and optimization
 
 **Usage Example**:
+
 ```typescript
-import { uploadCampaignImage } from '@/src/firebase/storage';
+import { uploadCampaignImage } from "@/src/firebase/storage";
 
 // Upload campaign image
 const imageUrl = await uploadCampaignImage(campaignId, imageUri);
@@ -1158,6 +1564,7 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 ## 🎯 Features Checklist
 
 ### Authentication
+
 - [x] User registration with email/password
 - [x] Email verification system
 - [x] Password reset functionality
@@ -1165,6 +1572,7 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 - [x] Role-based access control
 
 ### Campaigns
+
 - [x] Campaign browsing with filters
 - [x] Campaign search functionality
 - [x] Campaign details with progress tracking
@@ -1175,6 +1583,7 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 - [x] Real-time campaign updates
 
 ### Donations
+
 - [x] Donation flow with custom amounts
 - [x] Anonymous donations
 - [x] Donation messages
@@ -1184,6 +1593,7 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 - [x] Real-time donation updates
 
 ### User Features
+
 - [x] User profile with statistics
 - [x] Donation history
 - [x] My campaigns management
@@ -1191,13 +1601,33 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 - [x] User statistics tracking
 
 ### Admin Features
+
 - [x] Admin dashboard with statistics
+- [x] Analytics charts (donation trends, campaign performance, user growth, revenue)
+- [x] Campaign approval/rejection workflow
 - [x] User management
 - [x] Campaign management
 - [x] Donations overview
 - [x] Role promotion
 
+### Email System
+
+- [x] Email notification service (Express.js + Brevo SMTP)
+- [x] Donation notification emails to campaign owners
+- [x] Thank you emails to donors
+- [x] Campaign approval/rejection emails
+- [x] Campaign completion emails
+- [x] Email backend health check
+
+### PDF Export
+
+- [x] PDF donation e-statement generation
+- [x] Day/Month/Year filtering options
+- [x] Professional HTML template
+- [x] Share functionality (expo-sharing)
+
 ### Notifications
+
 - [x] Push notification system (Expo Notifications)
 - [x] Device registration and token management
 - [x] Android notification channel configuration
@@ -1217,6 +1647,7 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
   - Admin actions
 
 ### UI/UX
+
 - [x] Modern gradient designs
 - [x] Smooth animations
 - [x] Loading states and skeletons
@@ -1239,11 +1670,13 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 ## 🛠️ Tech Stack Details
 
 ### Frontend Framework
+
 - **Expo SDK 54** - React Native framework for cross-platform mobile development
 - **React Native 0.81.5** - Mobile app framework
 - **React 19.1.0** - UI library
 
 ### Routing & Navigation
+
 - **Expo Router 6.0.15** - File-based routing system with type-safe navigation
 - **React Navigation 7.x** - Navigation library for tab and stack navigation
   - `@react-navigation/native` - Core navigation library
@@ -1251,11 +1684,13 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
   - `@react-navigation/elements` - Navigation UI elements
 
 ### Language & Type Safety
+
 - **TypeScript 5.9.2** - Type-safe JavaScript with full type coverage
 - **ESLint 9.25.0** - Code linting and quality checks
 - **ESLint Config Expo** - Expo-specific ESLint configuration
 
 ### Styling
+
 - **NativeWind 4.2.1** - Tailwind CSS for React Native
 - **Tailwind CSS 3.4.18** - Utility-first CSS framework
 - **Expo Linear Gradient** - Gradient components
@@ -1263,6 +1698,7 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 - **React Native Gesture Handler** - Native gesture handling
 
 ### Backend Services
+
 - **Firebase 12.6.0** - Backend-as-a-Service
   - **Firebase Auth** - User authentication with email/password
   - **Cloud Firestore** - NoSQL database with real-time updates
@@ -1271,35 +1707,41 @@ const imageUrl = await uploadCampaignImage(campaignId, imageUri);
 - **Cloudinary** - Image upload and CDN service
 
 ### Notifications
+
 - **Expo Notifications 0.32.13** - Push notification system
   - Android notification channels
   - iOS notification handling
   - Foreground notification display
 
 ### Storage & Persistence
+
 - **AsyncStorage 2.2.0** - Local data persistence
   - Used for Firebase Auth persistence
   - User preferences storage
 
 ### UI Components & Icons
+
 - **@expo/vector-icons 15.0.3** - Icon library (Ionicons, MaterialIcons, etc.)
 - **Expo Image 3.0.10** - Optimized image component
 - **Expo Image Picker 17.0.8** - Image selection from device
 - **Expo Haptics 15.0.7** - Haptic feedback
 
 ### Build & Deployment
+
 - **EAS Build** - Expo Application Services for cloud builds
 - **EAS CLI** - Command-line tools for EAS services
 - **Expo Constants 18.0.10** - App configuration access
 - **Expo Device 8.0.9** - Device information
 
 ### Development Tools
+
 - **Expo Dev Client** - Custom development build
 - **Metro Bundler** - JavaScript bundler
 - **Babel** - JavaScript compiler
 - **Prettier Plugin Tailwind** - Code formatting
 
 ### Additional Libraries
+
 - **React Native Safe Area Context** - Safe area handling
 - **React Native Screens** - Native screen management
 - **React Native Web** - Web platform support
